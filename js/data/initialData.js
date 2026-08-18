@@ -683,16 +683,16 @@ export const initialData = {
         },
 
         // =====================================================================
-        // MÓDULO 4: Logística, envíos y devoluciones
+        // MÓDULO 5: Logística, envíos y devoluciones
         // =====================================================================
         {
-          id: "mod_4",
-          title: "MÓDULO 4: Logística, envíos y devoluciones",
+          id: "mod_5",
+          title: "MÓDULO 5: Logística, envíos y devoluciones",
           description: "Aprende la gestión operativa de entregas, modelos de fulfillment, empaque eficiente y manejo proactivo de novedades para evitar devoluciones.",
           lessons: [
             // Lección 1
             {
-              id: "m4_l1",
+              id: "m5_l1",
               title: "LECCIÓN 1: Fundamentos de logística y modelos de fulfillment (Propio, Tercerizado y Dropshipping)",
               type: "video_content",
               videoUrl: "https://www.youtube.com/watch?v=uvC6dXiiCxo",
@@ -790,7 +790,7 @@ export const initialData = {
 
             // Lección 2
             {
-              id: "m4_l2",
+              id: "m5_l2",
               title: "LECCIÓN 2: Gestión de inventario, empaque y entrega de última milla",
               type: "video_content",
               videoUrl: "https://www.youtube.com/watch?v=rqT8XuUOErA",
@@ -880,7 +880,7 @@ export const initialData = {
 
             // Lección 3
             {
-              id: "m4_l3",
+              id: "m5_l3",
               title: "LECCIÓN 3: Gestión de novedades, devoluciones y logística inversa",
               type: "video_content",
               videoUrl: "https://www.youtube.com/watch?v=uM7KrxoFnOM",
@@ -962,16 +962,16 @@ export const initialData = {
               ]
             },
 
-            // Quiz Módulo 4
+            // Quiz Módulo 5
             {
-              id: "m4_quiz",
+              id: "m5_quiz",
               title: "EVALUACIÓN: Logística, envíos y devoluciones",
               type: "quiz",
-              summary: "Evaluación requerida para aprobar el Módulo 4. Puntaje mínimo: 70%",
+              summary: "Evaluación requerida para aprobar el Módulo 5. Puntaje mínimo: 70%",
               minScore: 70,
               questions: [
                 {
-                  id: "q4_1",
+                  id: "q5_1",
                   question: "1. En el modelo de Dropshipping, ¿cuál de las siguientes afirmaciones es correcta respecto al inventario?",
                   options: [
                     "Debes comprar grandes cantidades por adelantado y guardarlas en tu casa.",
@@ -983,14 +983,14 @@ export const initialData = {
                   explanation: "En dropshipping no compras inventario anticipado; el proveedor envía directamente al comprador."
                 },
                 {
-                  id: "q4_2",
+                  id: "q5_2",
                   question: "2. Las empresas de mensajería y paquetería cobran el flete basándose únicamente en el peso real que marca la báscula, sin importar el tamaño de la caja.",
                   options: ["Verdadero", "Falso"],
                   correctIndex: 1,
                   explanation: "Falso: Cobran por el mayor valor entre el peso real y el peso volumétrico (tamaño)."
                 },
                 {
-                  id: "q4_3",
+                  id: "q5_3",
                   question: "3. ¿Qué representa el 'Punto de Reorden' en la gestión básica de inventario?",
                   options: [
                     "La cantidad máxima de paquetes que un mensajero puede llevar en el día.",
@@ -1002,7 +1002,7 @@ export const initialData = {
                   explanation: "El punto de reorden es la alerta de stock mínimo para pedir nuevo inventario antes de agotar."
                 },
                 {
-                  id: "q4_4",
+                  id: "q5_4",
                   question: "4. ¿Cuál es la acción más efectiva para reducir las cancelaciones y devoluciones en pedidos con modalidad Pago Contra Entrega (COD)?",
                   options: [
                     "Despachar el paquete de inmediato sin revisar los datos.",
@@ -1014,7 +1014,7 @@ export const initialData = {
                   explanation: "Confirmar dirección y datos antes de enviar reduce drásticamente las entregas fallidas COD."
                 },
                 {
-                  id: "q4_5",
+                  id: "q5_5",
                   question: "5. En logística de e-commerce, una 'Novedad en ruta' (como cliente ausente o dirección no encontrada) debe resolverse y gestionarse el mismo día para evitar que el paquete sea devuelto a origen.",
                   options: ["Verdadero", "Falso"],
                   correctIndex: 0,
@@ -1026,17 +1026,17 @@ export const initialData = {
         },
 
         // =====================================================================
-        // MÓDULO 5: Marketing Digital y Redes Sociales para Vender
+        // MÓDULO 6: Marketing Digital y Redes Sociales para Vender
         // =====================================================================
         {
-          id: "mod_5",
-          title: "MÓDULO 5: Marketing Digital y Redes Sociales para Vender",
+          id: "mod_6",
+          title: "MÓDULO 6: Marketing Digital y Redes Sociales para Vender",
           description: "Domina el embudo de ventas TOFU-MOFU-BOFU, estrategias de contenido en redes sociales, automatizaciones de Email Marketing y publicidad pagada en Meta Ads.",
           lessons: [
-            // Lección 5.1
+            // Lección 6.1
             {
-              id: "m5_l1",
-              title: "LECCIÓN 5.1: Fundamentos y Embudo de Ventas Digital para Tiendas en Línea",
+              id: "m6_l1",
+              title: "LECCIÓN 6.1: Fundamentos y Embudo de Ventas Digital para Tiendas en Línea",
               type: "video_content",
               videoUrl: "https://www.youtube.com/watch?v=ABRqXRMLt-8",
               videoUrls: [
@@ -1108,10 +1108,10 @@ export const initialData = {
               ]
             },
 
-            // Lección 5.2
+            // Lección 6.2
             {
-              id: "m5_l2",
-              title: "LECCIÓN 5.2: Marketing de Contenidos y Social Commerce (Instagram, TikTok y Facebook)",
+              id: "m6_l2",
+              title: "LECCIÓN 6.2: Marketing de Contenidos y Social Commerce (Instagram, TikTok y Facebook)",
               type: "video_content",
               videoUrl: "https://www.youtube.com/watch?v=IFgPzdWO_wU",
               videoUrls: [
@@ -1172,10 +1172,10 @@ export const initialData = {
               ]
             },
 
-            // Lección 5.3
+            // Lección 6.3
             {
-              id: "m5_l3",
-              title: "LECCIÓN 5.3: Email Marketing Básico y Automatización de Retención",
+              id: "m6_l3",
+              title: "LECCIÓN 6.3: Email Marketing Básico y Automatización de Retención",
               type: "video_content",
               videoUrl: "https://www.youtube.com/watch?v=VT3ni8mbMUc",
               videoUrls: [
@@ -1230,10 +1230,10 @@ export const initialData = {
               ]
             },
 
-            // Lección 5.4
+            // Lección 6.4
             {
-              id: "m5_l4",
-              title: "LECCIÓN 5.4: Introducción Práctica a la Publicidad Pagada en Internet y Redes Sociales",
+              id: "m6_l4",
+              title: "LECCIÓN 6.4: Introducción Práctica a la Publicidad Pagada en Internet y Redes Sociales",
               type: "video_content",
               videoUrl: "https://www.youtube.com/watch?v=APLGmmxOBCY",
               videoUrls: [
@@ -1292,23 +1292,23 @@ export const initialData = {
               ]
             },
 
-            // Quiz Módulo 5
+            // Quiz Módulo 6
             {
-              id: "m5_quiz",
+              id: "m6_quiz",
               title: "EVALUACIÓN: Marketing Digital y Redes Sociales para Vender",
               type: "quiz",
-              summary: "Evaluación requerida para aprobar el Módulo 5. Puntaje mínimo: 70%",
+              summary: "Evaluación requerida para aprobar el Módulo 6. Puntaje mínimo: 70%",
               minScore: 70,
               questions: [
                 {
-                  id: "q5_1",
+                  id: "q6_1",
                   question: "1. ¿En la etapa de atracción (TOFU) del embudo de ventas, el objetivo principal siempre debe ser exigir la compra inmediata al cliente?",
                   options: ["Verdadero", "Falso"],
                   correctIndex: 1,
                   explanation: "Falso: En atracción el objetivo es captar atención y generar interés; la compra directa se empuja principalmente en la etapa de conversión."
                 },
                 {
-                  id: "q5_2",
+                  id: "q6_2",
                   question: "2. ¿Qué etapa del embudo se encarga de resolver dudas del producto y generar confianza antes de pagar?",
                   options: [
                     "Top of Funnel (Atracción)",
@@ -1319,14 +1319,14 @@ export const initialData = {
                   explanation: "Middle of Funnel (Consideración) resuelve dudas y construye confianza antes de pedir la compra."
                 },
                 {
-                  id: "q5_3",
+                  id: "q6_3",
                   question: "3. ¿Los primeros 3 segundos de un video corto (Reel o TikTok) son los más críticos para evitar que el usuario deslice y se vaya?",
                   options: ["Verdadero", "Falso"],
                   correctIndex: 0,
                   explanation: "Verdadero: El gancho inicial determina si el algoritmo distribuirá el contenido a más personas."
                 },
                 {
-                  id: "q5_4",
+                  id: "q6_4",
                   question: "4. ¿Cuál de los siguientes formatos suele generar mayor confianza en la decisión de compra?",
                   options: [
                     "Una foto de catálogo con fondo blanco genérico",
@@ -1337,7 +1337,7 @@ export const initialData = {
                   explanation: "El contenido demostrativo en uso real (UGC) genera mucha mayor confianza y tasa de conversión."
                 },
                 {
-                  id: "q5_5",
+                  id: "q6_5",
                   question: "5. ¿Para generar ventas reales en una tienda online, es mejor elegir el objetivo 'Ventas/Conversiones' en Meta Ads?",
                   options: ["Verdadero", "Falso"],
                   correctIndex: 0,
@@ -1349,17 +1349,17 @@ export const initialData = {
         },
 
         // =====================================================================
-        // MÓDULO 6: Atención al Cliente y Fidelización
+        // MÓDULO 7: Atención al Cliente y Fidelización
         // =====================================================================
         {
-          id: "mod_6",
-          title: "MÓDULO 6: Atención al Cliente y Fidelización",
+          id: "mod_7",
+          title: "MÓDULO 7: Atención al Cliente y Fidelización",
           description: "Domina la omnicanalidad, protocolos de resolución de quejas, métricas de satisfacción (CSAT y NPS) y estrategias de recompra para maximizar el LTV del cliente.",
           lessons: [
-            // Lección 6.1
+            // Lección 7.1
             {
-              id: "m6_l1",
-              title: "LECCIÓN 6.1: Fundamentos y Canales de Atención (WhatsApp, Redes, Chat y Correo)",
+              id: "m7_l1",
+              title: "LECCIÓN 7.1: Fundamentos y Canales de Atención (WhatsApp, Redes, Chat y Correo)",
               type: "video_content",
               videoUrl: "https://www.youtube.com/watch?v=bHpo2JsNHnI",
               videoUrls: [
@@ -1422,10 +1422,10 @@ export const initialData = {
               ]
             },
 
-            // Lección 6.2
+            // Lección 7.2
             {
-              id: "m6_l2",
-              title: "LECCIÓN 6.2: Protocolo para el Manejo de Quejas, Reclamos y Clientes Difíciles",
+              id: "m7_l2",
+              title: "LECCIÓN 7.2: Protocolo para el Manejo de Quejas, Reclamos y Clientes Difíciles",
               type: "video_content",
               videoUrl: "https://www.youtube.com/watch?v=vVpqv_aMj_I",
               videoUrls: [
@@ -1481,10 +1481,10 @@ export const initialData = {
               ]
             },
 
-            // Lección 6.3
+            // Lección 7.3
             {
-              id: "m6_l3",
-              title: "LECCIÓN 6.3: Medición de la Satisfacción del Cliente (NPS y CSAT)",
+              id: "m7_l3",
+              title: "LECCIÓN 7.3: Medición de la Satisfacción del Cliente (NPS y CSAT)",
               type: "video_content",
               videoUrl: "https://www.youtube.com/watch?v=mayXQ9uWPvk",
               videoUrls: [
@@ -1543,10 +1543,10 @@ export const initialData = {
               ]
             },
 
-            // Lección 6.4
+            // Lección 7.4
             {
-              id: "m6_l4",
-              title: "LECCIÓN 6.4: Estrategias de Fidelización, Recompra y Aumento del LTV",
+              id: "m7_l4",
+              title: "LECCIÓN 7.4: Estrategias de Fidelización, Recompra y Aumento del LTV",
               type: "video_content",
               videoUrl: "https://www.youtube.com/watch?v=osK3rxLTfu0",
               videoUrls: [
@@ -1602,16 +1602,16 @@ export const initialData = {
               ]
             },
 
-            // Quiz Módulo 6
+            // Quiz Módulo 7
             {
-              id: "m6_quiz",
+              id: "m7_quiz",
               title: "EVALUACIÓN FINAL: Atención al Cliente y Fidelización",
               type: "quiz",
-              summary: "Evaluación requerida para aprobar el Módulo 6. Puntaje mínimo: 70%",
+              summary: "Evaluación requerida para aprobar el Módulo 7. Puntaje mínimo: 70%",
               minScore: 70,
               questions: [
                 {
-                  id: "q6_1",
+                  id: "q7_1",
                   question: "1. ¿Cuál es la función principal de WhatsApp Business en la etapa de preventa de una tienda online?",
                   options: [
                     "Reducir la fricción y resolver dudas de compra de forma inmediata para cerrar la venta.",
@@ -1621,14 +1621,14 @@ export const initialData = {
                   explanation: "En preventa, responder de inmediato por WhatsApp resuelve dudas de compra y cierra ventas."
                 },
                 {
-                  id: "q6_2",
+                  id: "q7_2",
                   question: "2. Ante el reclamo de un cliente por un producto dañado, ¿lo más recomendable es debatir con él y exigirle que primero tramite el reclamo directamente con la transportadora?",
                   options: ["Verdadero", "Falso"],
                   correctIndex: 1,
                   explanation: "Falso: La tienda debe liderar la solución y respaldo al comprador sin culpar a terceros."
                 },
                 {
-                  id: "q6_3",
+                  id: "q7_3",
                   question: "3. En la métrica Net Promoter Score (NPS), ¿cómo se clasifican los clientes que responden con una calificación de 9 o 10?",
                   options: [
                     "Clientes Detractores",
@@ -1639,7 +1639,7 @@ export const initialData = {
                   explanation: "Quienes califican con 9 o 10 son considerados Promotores leales de tu marca."
                 },
                 {
-                  id: "q6_4",
+                  id: "q7_4",
                   question: "4. ¿Qué significa la métrica LTV (Lifetime Value) en el comercio electrónico?",
                   options: [
                     "El costo total de fabricación del producto.",
@@ -1650,7 +1650,7 @@ export const initialData = {
                   explanation: "LTV es el valor económico total generado por un cliente a lo largo de su historia de compras."
                 },
                 {
-                  id: "q6_5",
+                  id: "q7_5",
                   question: "5. Incluir una tarjeta de agradecimiento con un cupón para la siguiente compra dentro del empaque es una táctica efectiva de fidelización de bajo costo.",
                   options: ["Verdadero", "Falso"],
                   correctIndex: 0,

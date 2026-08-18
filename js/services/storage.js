@@ -1,6 +1,6 @@
 import { initialData } from '../data/initialData.js';
 
-const STORAGE_KEY = 'skoolx_platform_state_v9'; // Bumped to v9 to force-sync sequential module order 1 to 6
+const STORAGE_KEY = 'skoolx_platform_state_v10'; // Bumped version to restore module numbering 1, 2, 3, 5, 6, 7
 
 export function loadState() {
   try {
