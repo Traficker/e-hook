@@ -1,6 +1,6 @@
 import { initialData } from '../data/initialData.js';
 
-const STORAGE_KEY = 'skoolx_platform_state_v7'; // Bumped version for Module 7 (Customer Service & Loyalty)
+const STORAGE_KEY = 'skoolx_platform_state_v8'; // Bumped version for sequential module renumbering (1 to 6)
 
 export function loadState() {
   try {
