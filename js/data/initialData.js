@@ -1346,6 +1346,319 @@ export const initialData = {
               ]
             }
           ]
+        },
+
+        // =====================================================================
+        // MÓDULO 7: Atención al Cliente y Fidelización
+        // =====================================================================
+        {
+          id: "mod_7",
+          title: "MÓDULO 7: Atención al Cliente y Fidelización",
+          description: "Domina la omnicanalidad, protocolos de resolución de quejas, métricas de satisfacción (CSAT y NPS) y estrategias de recompra para maximizar el LTV del cliente.",
+          lessons: [
+            // Lección 7.1
+            {
+              id: "m7_l1",
+              title: "LECCIÓN 7.1: Fundamentos y Canales de Atención (WhatsApp, Redes, Chat y Correo)",
+              type: "video_content",
+              videoUrl: "https://www.youtube.com/watch?v=bHpo2JsNHnI",
+              videoUrls: [
+                "https://www.youtube.com/watch?v=bHpo2JsNHnI",
+                "https://www.youtube.com/watch?v=XNdfscOaNuU"
+              ],
+              summary: "Aprende la omnicanalidad práctica, tiempos de respuesta críticos en preventa y postventa, y estandarización con atajos en WhatsApp Business.",
+              contentHTML: `
+                <div class="lesson-rich-content">
+                  <div class="callout callout-primary">
+                    <h3>💡 Concepto Clave (Nivel Cero)</h3>
+                    <p>La atención al cliente en e-commerce no es solo "responder preguntas": es un canal directo de conversión y postventa. Una mala respuesta o una demora prolongada detiene una compra.</p>
+                  </div>
+
+                  <h2>1. Pilares de la Atención Comercial</h2>
+                  <ul>
+                    <li><strong>Omnicanalidad Práctica:</strong> Centralizar los mensajes que llegan por Instagram DM, TikTok, WhatsApp y Correo para que ningún comprador quede desatendido.</li>
+                    <li><strong>Tiempos de Respuesta Críticos:</strong>
+                      <ul>
+                        <li><em>En preventa (dudas antes de pagar):</em> Menos de 5 a 15 minutos para no perder la intención de compra.</li>
+                        <li><em>En postventa (guías y novedades):</em> Menos de 2 a 4 horas.</li>
+                      </ul>
+                    </li>
+                    <li><strong>Estandarización:</strong> Uso de respuestas rápidas en WhatsApp Business para resolver preguntas frecuentes (tallas, envíos, métodos de pago) en 2 clics.</li>
+                  </ul>
+
+                  <hr style="border:none;border-top:1px solid var(--border-color);margin:1.5rem 0;">
+
+                  <h3>🤖 Caja de Herramientas & Prompt de IA</h3>
+                  <div class="callout callout-accent" style="background:rgba(99,102,241,0.08);border-left-color:var(--accent-primary);">
+                    <p><strong>Prompt para Respuestas Rápidas de Atención:</strong></p>
+                    <code style="display:block;padding:10px;background:var(--bg-sidebar);border-radius:6px;margin-top:6px;font-size:0.88rem;">
+                      Actúa como un experto en servicio al cliente para e-commerce. Mi tienda online vende: [TIPO DE PRODUCTOS].<br><br>
+                      Redacta 5 plantillas de respuestas rápidas y profesionales para WhatsApp Business:<br>
+                      1. Saludo inicial con información de métodos de pago y tiempos de entrega.<br>
+                      2. Respuesta a cliente que pide descuento.<br>
+                      3. Envío de número de guía / enlace de rastreo.<br>
+                      4. Notificación de pedido despachado.<br>
+                      5. Mensaje de cierre cordial invitando a calificar la experiencia.
+                    </code>
+                  </div>
+
+                  <h3>✏️ Actividad Práctica</h3>
+                  <ol>
+                    <li>Descarga y configura WhatsApp Business con tu perfil de marca (logo, horarios de atención y descripción).</li>
+                    <li>Guarda al menos 3 respuestas rápidas (atajos /guia, /pagos, /saludo) con los datos reales de tu tienda.</li>
+                  </ol>
+
+                  <h3>📺 Videos de Apoyo Recomendados</h3>
+                  <ul>
+                    <li>🎥 <strong>Video 1:</strong> <em>Cómo Crear Un Protocolo De Atención Al Cliente Por WhatsApp</em> (Canal delaossa·co)</li>
+                    <li>🎥 <strong>Video 2:</strong> <em>Cómo Usar WhatsApp Business para Vender</em> (Canal HubSpot Español)</li>
+                  </ul>
+                </div>
+              `,
+              checklist: [
+                "Configuré mi perfil de empresa en WhatsApp Business con logo, horario y catálogo/enlace web.",
+                "Establecí un tiempo meta de respuesta en preventa inferior a 15 minutos.",
+                "Guardé las 3 respuestas rápidas básicas para las preguntas más repetitivas."
+              ]
+            },
+
+            // Lección 7.2
+            {
+              id: "m7_l2",
+              title: "LECCIÓN 7.2: Protocolo para el Manejo de Quejas, Reclamos y Clientes Difíciles",
+              type: "video_content",
+              videoUrl: "https://www.youtube.com/watch?v=vVpqv_aMj_I",
+              videoUrls: [
+                "https://www.youtube.com/watch?v=vVpqv_aMj_I"
+              ],
+              summary: "Aplica el método 'Escuchar y Resolver' para transformar un comprador inconforme en un cliente leal.",
+              contentHTML: `
+                <div class="lesson-rich-content">
+                  <div class="callout callout-primary">
+                    <h3>💡 Concepto Clave (Nivel Cero)</h3>
+                    <p>Un cliente inconforme no es un enemigo; es una oportunidad para demostrar respaldo y ganar un comprador leal. Para desescalar conflictos se aplica el método <strong>Escuchar y Resolver</strong>.</p>
+                  </div>
+
+                  <h2>Pasos del Método Escuchar y Resolver</h2>
+                  <ol>
+                    <li><strong>Escuchar sin interrumpir ni ponerse a la defensiva:</strong> Nunca culpar al cliente, a la transportadora o a la fábrica en el primer contacto.</li>
+                    <li><strong>Empatizar y validar la emoción:</strong> Usar frases como <em>"Entiendo totalmente tu frustración y vamos a solucionarlo de inmediato"</em>.</li>
+                    <li><strong>Ofrecer una solución clara y sin trabas:</strong> Cambio inmediato de producto, reenvío sin costo adicional o reembolso si aplica la garantía.</li>
+                    <li><strong>Seguimiento post-solución:</strong> Verificar 48 horas después que el cliente recibió su cambio y quedó satisfecho.</li>
+                  </ol>
+
+                  <hr style="border:none;border-top:1px solid var(--border-color);margin:1.5rem 0;">
+
+                  <h3>🤖 Caja de Herramientas & Prompt de IA</h3>
+                  <div class="callout callout-accent" style="background:rgba(99,102,241,0.08);border-left-color:var(--accent-primary);">
+                    <p><strong>Prompt para Manejo de Quejas y Conflictos:</strong></p>
+                    <code style="display:block;padding:10px;background:var(--bg-sidebar);border-radius:6px;margin-top:6px;font-size:0.88rem;">
+                      Actúa como un especialista en resolución de conflictos para tiendas online. Un cliente está muy molesto porque [DESCRIBE EL PROBLEMA, EJ: SU PAQUETE LLEGÓ CON EL EMPAQUE ROTO / EL PRODUCTO NO PRENDIÓ].<br><br>
+                      Redacta un mensaje de respuesta para WhatsApp que cumpla con:<br>
+                      • Empatía genuina sin excusas defensivas.<br>
+                      • Paso a paso exacto de lo que haremos para solucionar su caso hoy mismo.<br>
+                      • Instrucción clara de qué foto/video necesitamos para procesar la garantía sin hacerlo sentir desconfiado.
+                    </code>
+                  </div>
+
+                  <h3>✏️ Actividad Práctica</h3>
+                  <ol>
+                    <li>Redacta tu política básica de devoluciones y garantías en 1 solo párrafo claro (sin letra chica).</li>
+                    <li>Crea una plantilla de respuesta de contingencia para paquetes con defectos de fábrica o averías en transporte.</li>
+                  </ol>
+
+                  <h3>📺 Videos de Apoyo Recomendados</h3>
+                  <ul>
+                    <li>🎥 <strong>Video 1:</strong> <em>Gestión de quejas y reclamaciones</em> (Canal César Piqueras)</li>
+                    <li>🎥 <strong>Video 2:</strong> <em>¿Cómo ATENDER QUEJAS y RECLAMOS de los CLIENTES?</em> (Canal Gestionar Fácil)</li>
+                  </ul>
+                </div>
+              `,
+              checklist: [
+                "Tengo una política de garantías clara y visible para mis compradores.",
+                "Cuento con un protocolo de respuesta empático que evita discusiones y ofrece soluciones directas.",
+                "Registro cada queja recibida en una lista para detectar patrones de productos defectuosos o fallas logísticas."
+              ]
+            },
+
+            // Lección 7.3
+            {
+              id: "m7_l3",
+              title: "LECCIÓN 7.3: Medición de la Satisfacción del Cliente (NPS y CSAT)",
+              type: "video_content",
+              videoUrl: "https://www.youtube.com/watch?v=mayXQ9uWPvk",
+              videoUrls: [
+                "https://www.youtube.com/watch?v=mayXQ9uWPvk",
+                "https://www.youtube.com/watch?v=s_2FavJOX5E"
+              ],
+              summary: "Aprende los indicadores clave CSAT y NPS para medir la satisfacción y lealtad de tus compradores.",
+              contentHTML: `
+                <div class="lesson-rich-content">
+                  <div class="callout callout-primary">
+                    <h3>💡 Concepto Clave (Nivel Cero)</h3>
+                    <p>Lo que no se mide no se puede mejorar. Para saber si tu servicio y productos son de calidad, utilizas dos indicadores estándar:</p>
+                  </div>
+
+                  <h2>1. CSAT (Customer Satisfaction Score / Puntuación de Satisfacción)</h2>
+                  <p>Mide la satisfacción inmediata tras una interacción específica (ej. entrega de pedido o atención por chat).</p>
+
+                  <h2>2. NPS (Net Promoter Score / Lealtad y Recomendación)</h2>
+                  <p>Pregunta única (Escala 0 al 10): <em>"¿Qué tan probable es que recomiendes nuestra tienda a un amigo?"</em></p>
+
+                  <div class="callout callout-accent" style="margin:1rem 0;background:rgba(99,102,241,0.08);border-left-color:var(--accent-primary);">
+                    <p style="font-weight:700;font-size:1rem;margin:0;">
+                      📊 NPS = % Promotores (califican 9-10) − % Detractores (califican 0-6)
+                    </p>
+                  </div>
+
+                  <hr style="border:none;border-top:1px solid var(--border-color);margin:1.5rem 0;">
+
+                  <h3>🤖 Caja de Herramientas & Prompt de IA</h3>
+                  <div class="callout callout-accent" style="background:rgba(99,102,241,0.08);border-left-color:var(--accent-primary);">
+                    <p><strong>Prompt para Mensaje de Encuesta Postventa:</strong></p>
+                    <code style="display:block;padding:10px;background:var(--bg-sidebar);border-radius:6px;margin-top:6px;font-size:0.88rem;">
+                      Diseña un mensaje corto y amigable para enviar por WhatsApp 3 días después de que el cliente recibió su pedido.<br><br>
+                      El mensaje debe:<br>
+                      1. Preguntar si el producto llegó en perfecto estado.<br>
+                      2. Ofrecer un incentivo (ej. cupón de 10% en su próxima compra) a cambio de dejar una foto o reseña en la tienda.
+                    </code>
+                  </div>
+
+                  <h3>✏️ Actividad Práctica</h3>
+                  <ol>
+                    <li>Crea un formulario de 2 preguntas en Google Forms o diseña un mensaje directo de WhatsApp para pedir retroalimentación tras cada entrega.</li>
+                    <li>Envía la encuesta a tus últimos compradores y recopila sus comentarios.</li>
+                  </ol>
+
+                  <h3>📺 Videos de Apoyo Recomendados</h3>
+                  <ul>
+                    <li>🎥 <strong>Video 1:</strong> <em>¿Qué es Net Promoter Score? - Mide la Satisfacción del Cliente</em> (Canal Cyberclick)</li>
+                    <li>🎥 <strong>Video 2:</strong> <em>Qué es CSAT (Customer Satisfaction Score)</em> (Canal QServus)</li>
+                  </ul>
+                </div>
+              `,
+              checklist: [
+                "Entiendo la diferencia entre satisfacción puntual (CSAT) y lealtad/recomendación (NPS).",
+                "Utilizo las calificaciones positivas para pedir testimonios en video o fotos para mis canales digitales."
+              ]
+            },
+
+            // Lección 7.4
+            {
+              id: "m7_l4",
+              title: "LECCIÓN 7.4: Estrategias de Fidelización, Recompra y Aumento del LTV",
+              type: "video_content",
+              videoUrl: "https://www.youtube.com/watch?v=osK3rxLTfu0",
+              videoUrls: [
+                "https://www.youtube.com/watch?v=osK3rxLTfu0",
+                "https://www.youtube.com/watch?v=80WPR05Nux8"
+              ],
+              summary: "Aumenta el ciclo de vida del cliente (LTV) mediante unboxing especial, cross-selling, programas de puntos y reposición.",
+              contentHTML: `
+                <div class="lesson-rich-content">
+                  <div class="callout callout-primary">
+                    <h3>💡 Concepto Clave (Nivel Cero)</h3>
+                    <p>Adquirir un cliente nuevo cuesta más que retener a uno que ya confió en ti. El objetivo de esta lección es maximizar el <strong>LTV (Lifetime Value / Valor del ciclo de vida del cliente)</strong> mediante estrategias de recompra.</p>
+                  </div>
+
+                  <h2>Estrategias Prácticas de Fidelización</h2>
+                  <ul>
+                    <li><strong>Unboxing Cuidadoso:</strong> Una tarjeta de agradecimiento personalizada dentro de la caja con un cupón exclusivo para su segunda orden.</li>
+                    <li><strong>Venta Cruzada Postventa (Cross-selling):</strong> Recomendar productos complementarios 15 días después de la compra (ej. si compró una cafetera, ofrecerle el café o los filtros).</li>
+                    <li><strong>Club VIP o Programa de Puntos:</strong> Acceso prioritario a lanzamientos y descuentos exclusivos para clientes recurrentes.</li>
+                    <li><strong>Recordatorios de Reposición:</strong> Para productos consumibles (cosméticos, suplementos, aseo), enviar un recordatorio cuando el producto esté por terminarse.</li>
+                  </ul>
+
+                  <hr style="border:none;border-top:1px solid var(--border-color);margin:1.5rem 0;">
+
+                  <h3>🤖 Caja de Herramientas & Prompt de IA</h3>
+                  <div class="callout callout-accent" style="background:rgba(99,102,241,0.08);border-left-color:var(--accent-primary);">
+                    <p><strong>Prompt para Campaña de Recompra y Cross-Selling:</strong></p>
+                    <code style="display:block;padding:10px;background:var(--bg-sidebar);border-radius:6px;margin-top:6px;font-size:0.88rem;">
+                      Actúa como un estratega de retención para e-commerce. Mi producto principal es: [NOMBRE DEL PRODUCTO] y los productos complementarios son: [PRODUCTOS COMPLEMENTARIOS].<br><br>
+                      Diseña una campaña de 2 mensajes para incentivar la segunda compra:<br>
+                      • Mensaje 1 (Enviado a los 10 días): Consejos de uso para sacarle el máximo provecho al producto adquirido.<br>
+                      • Mensaje 2 (Enviado a los 20 días): Oferta especial con descuento por tiempo limitado en el producto complementario.
+                    </code>
+                  </div>
+
+                  <h3>✏️ Actividad Práctica</h3>
+                  <ol>
+                    <li>Diseña una tarjeta de agradecimiento física con un código de descuento único (<code>GRACIAS10</code>) para incluir dentro de todos tus paquetes.</li>
+                    <li>Identifica cuál de tus productos actuales tiene potencial de recompra o venta cruzada y crea una lista de contacto para tus clientes actuales.</li>
+                  </ol>
+
+                  <h3>📺 Videos de Apoyo Recomendados</h3>
+                  <ul>
+                    <li>🎥 <strong>Video 1:</strong> <em>¿Quieres Vender Más? 5 Técnicas que SOLO los Mejores Vendedores Conocen</em> (Canal Margarita Pasos)</li>
+                    <li>🎥 <strong>Video 2:</strong> <em>Cómo crear valor para el cliente - Curso de fidelización</em> (Canal Edutin Academy)</li>
+                  </ul>
+                </div>
+              `,
+              checklist: [
+                "Incluyo un elemento de fidelización física dentro del paquete (tarjeta de agradecimiento, obsequio o cupón).",
+                "Tengo identificados los productos complementarios para hacer venta cruzada (cross-selling).",
+                "Cuento con un calendario de contactos para reactivar clientes inactivos después de 30 o 60 días."
+              ]
+            },
+
+            // Quiz Módulo 7
+            {
+              id: "m7_quiz",
+              title: "EVALUACIÓN FINAL: Atención al Cliente y Fidelización",
+              type: "quiz",
+              summary: "Evaluación requerida para aprobar el Módulo 7. Puntaje mínimo: 70%",
+              minScore: 70,
+              questions: [
+                {
+                  id: "q7_1",
+                  question: "1. ¿Cuál es la función principal de WhatsApp Business en la etapa de preventa de una tienda online?",
+                  options: [
+                    "Reducir la fricción y resolver dudas de compra de forma inmediata para cerrar la venta.",
+                    "Reemplazar la necesidad de empacar los pedidos."
+                  ],
+                  correctIndex: 0,
+                  explanation: "En preventa, responder de inmediato por WhatsApp resuelve dudas de compra y cierra ventas."
+                },
+                {
+                  id: "q7_2",
+                  question: "2. Ante el reclamo de un cliente por un producto dañado, ¿lo más recomendable es debatir con él y exigirle que primero tramite el reclamo directamente con la transportadora?",
+                  options: ["Verdadero", "Falso"],
+                  correctIndex: 1,
+                  explanation: "Falso: La tienda debe liderar la solución y respaldo al comprador sin culpar a terceros."
+                },
+                {
+                  id: "q7_3",
+                  question: "3. En la métrica Net Promoter Score (NPS), ¿cómo se clasifican los clientes que responden con una calificación de 9 o 10?",
+                  options: [
+                    "Clientes Detractores",
+                    "Clientes Promotores",
+                    "Clientes Pasivos"
+                  ],
+                  correctIndex: 1,
+                  explanation: "Quienes califican con 9 o 10 son considerados Promotores leales de tu marca."
+                },
+                {
+                  id: "q7_4",
+                  question: "4. ¿Qué significa la métrica LTV (Lifetime Value) en el comercio electrónico?",
+                  options: [
+                    "El costo total de fabricación del producto.",
+                    "El valor monetario total que un cliente aporta a la tienda a lo largo de toda su relación comercial.",
+                    "El tiempo que tarda una encomienda en llegar."
+                  ],
+                  correctIndex: 1,
+                  explanation: "LTV es el valor económico total generado por un cliente a lo largo de su historia de compras."
+                },
+                {
+                  id: "q7_5",
+                  question: "5. Incluir una tarjeta de agradecimiento con un cupón para la siguiente compra dentro del empaque es una táctica efectiva de fidelización de bajo costo.",
+                  options: ["Verdadero", "Falso"],
+                  correctIndex: 0,
+                  explanation: "Verdadero: El detalle del unboxing incentiva la segunda compra con bajo costo de adquisición."
+                }
+              ]
+            }
+          ]
         }
       ]
     }
