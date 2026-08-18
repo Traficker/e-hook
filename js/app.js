@@ -81,8 +81,8 @@ class SkoolApp {
     return `
       <header class="header-navbar">
         <div class="nav-brand" onclick="window.app.switchTab('classroom')">
-          <div class="brand-logo">SX</div>
-          <h1 class="brand-title">Skool<span>X</span></h1>
+          <div class="brand-logo">EH</div>
+          <h1 class="brand-title">E-<span>hook</span></h1>
         </div>
 
         <!-- Buscador global por palabras clave -->
