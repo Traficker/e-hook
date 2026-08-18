@@ -1,6 +1,6 @@
 import { initialData } from '../data/initialData.js';
 
-const STORAGE_KEY = 'skoolx_platform_state_v8'; // Bumped version for sequential module renumbering (1 to 6)
+const STORAGE_KEY = 'skoolx_platform_state_v9'; // Bumped to v9 to force-sync sequential module order 1 to 6
 
 export function loadState() {
   try {
@@ -8,31 +8,16 @@ export function loadState() {
     if (raw) {
       const parsed = JSON.parse(raw);
 
-      // Preserve user changes & merge missing initial data gracefully
       if (!parsed.courses || parsed.courses.length === 0) {
         parsed.courses = initialData.courses;
       } else {
-        // Ensure new modules or initial lessons exist without overwriting user edits
-        initialData.courses.forEach(initCourse => {
-          let courseInState = parsed.courses.find(c => c.id === initCourse.id);
-          if (!courseInState) {
-            parsed.courses.push(initCourse);
-          } else {
-            initCourse.modules.forEach(initMod => {
-              let modInState = courseInState.modules.find(m => m.id === initMod.id);
-              if (!modInState) {
-                courseInState.modules.push(initMod);
-              } else {
-                initMod.lessons.forEach(initLesson => {
-                  let lessonInState = modInState.lessons.find(l => l.id === initLesson.id);
-                  if (!lessonInState) {
-                    modInState.lessons.push(initLesson);
-                  }
-                });
-              }
-            });
-          }
-        });
+        // Force sync modules array from initialData to guarantee strict 1 to 6 sequence
+        const ehookIdx = parsed.courses.findIndex(c => c.id === 'course_ehook');
+        if (ehookIdx > -1) {
+          parsed.courses[ehookIdx].modules = initialData.courses[0].modules;
+        } else {
+          parsed.courses = initialData.courses;
+        }
       }
 
       if (!parsed.newsPosts) {
