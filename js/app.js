@@ -422,10 +422,9 @@ class SkoolApp {
       return course.creator_id === this.authenticatedUser.id;
     }
 
-    // Para el curso base E-hook (course_ehook):
-    // Dejado vacío intencionalmente: NADIE es Admin del curso base por ahora
+    // Lista Blanca Oficial del Super Administrador del Curso Prime
     const authorizedAdminEmails = [
-      // Lista vacía por solicitud del usuario
+      'logitrafiker@gmail.com' // Super Admin Oficial
     ];
 
     if (this.authenticatedUser && this.authenticatedUser.email) {
