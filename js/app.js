@@ -1551,13 +1551,80 @@ class SkoolApp {
   // ADMIN PANEL (ADMINISTRAR CURSOS, MODULOS, LECCIONES Y ENLACES DE VIDEO)
   // ==========================================================================
 
+  // --- Reordering Methods for Modules and Lessons ---
+  moveModuleUp(modId) {
+    const course = this.state.courses.find(c => c.id === this.selectedCourseId);
+    if (!course) return;
+    const idx = course.modules.findIndex(m => m.id === modId);
+    if (idx > 0) {
+      this.updateState(state => {
+        const targetCourse = state.courses.find(c => c.id === this.selectedCourseId);
+        const temp = targetCourse.modules[idx];
+        targetCourse.modules[idx] = targetCourse.modules[idx - 1];
+        targetCourse.modules[idx - 1] = temp;
+      });
+      this.showToast('⬆️ Módulo reordenado hacia arriba', 'success');
+    }
+  }
+
+  moveModuleDown(modId) {
+    const course = this.state.courses.find(c => c.id === this.selectedCourseId);
+    if (!course) return;
+    const idx = course.modules.findIndex(m => m.id === modId);
+    if (idx < course.modules.length - 1) {
+      this.updateState(state => {
+        const targetCourse = state.courses.find(c => c.id === this.selectedCourseId);
+        const temp = targetCourse.modules[idx];
+        targetCourse.modules[idx] = targetCourse.modules[idx + 1];
+        targetCourse.modules[idx + 1] = temp;
+      });
+      this.showToast('⬇️ Módulo reordenado hacia abajo', 'success');
+    }
+  }
+
+  moveLessonUp(modId, lessonId) {
+    const course = this.state.courses.find(c => c.id === this.selectedCourseId);
+    if (!course) return;
+    const mod = course.modules.find(m => m.id === modId);
+    if (!mod) return;
+    const idx = mod.lessons.findIndex(l => l.id === lessonId);
+    if (idx > 0) {
+      this.updateState(state => {
+        const targetCourse = state.courses.find(c => c.id === this.selectedCourseId);
+        const targetMod = targetCourse.modules.find(m => m.id === modId);
+        const temp = targetMod.lessons[idx];
+        targetMod.lessons[idx] = targetMod.lessons[idx - 1];
+        targetMod.lessons[idx - 1] = temp;
+      });
+      this.showToast('⬆️ Lección reordenada hacia arriba', 'success');
+    }
+  }
+
+  moveLessonDown(modId, lessonId) {
+    const course = this.state.courses.find(c => c.id === this.selectedCourseId);
+    if (!course) return;
+    const mod = course.modules.find(m => m.id === modId);
+    if (!mod) return;
+    const idx = mod.lessons.findIndex(l => l.id === lessonId);
+    if (idx < mod.lessons.length - 1) {
+      this.updateState(state => {
+        const targetCourse = state.courses.find(c => c.id === this.selectedCourseId);
+        const targetMod = targetCourse.modules.find(m => m.id === modId);
+        const temp = targetMod.lessons[idx];
+        targetMod.lessons[idx] = targetMod.lessons[idx + 1];
+        targetMod.lessons[idx + 1] = temp;
+      });
+      this.showToast('⬇️ Lección reordenada hacia abajo', 'success');
+    }
+  }
+
   renderAdminPanel() {
     const course = this.state.courses.find(c => c.id === this.selectedCourseId) || this.state.courses[0];
 
     return `
       <div class="admin-header">
         <h1>⚙️ Panel de Administración y Creador</h1>
-        <p>Crea nuevos cursos, organiza módulos, añade lecciones y **linkea videos de YouTube/Vimeo en la caja incrustada**.</p>
+        <p>Crea nuevos cursos, reordena módulos y lecciones, añade contenido y linkea videos de YouTube/Vimeo.</p>
       </div>
 
       <div class="admin-tabs">
@@ -1571,19 +1638,29 @@ class SkoolApp {
 
       <!-- Manage Lessons Table -->
       <div class="admin-panel-card">
-        <h2>Lecciones del Curso: "${course.title}"</h2>
+        <h2>Estructura del Curso: "${course.title}"</h2>
         
         <div style="margin-top:1.5rem;">
-          ${course.modules.map(mod => `
+          ${course.modules.map((mod, modIdx) => `
             <div style="margin-bottom:2rem; background:var(--bg-sidebar); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:1rem;">
-              <div class="flex-between" style="margin-bottom:1rem; padding-bottom:8px; border-bottom:1px solid var(--border-color);">
-                <h3>📦 ${mod.title}</h3>
-                <span style="font-size:0.85rem; color:var(--text-muted);">${mod.lessons.length} lecciones</span>
+              <div class="flex-between" style="margin-bottom:1rem; padding-bottom:8px; border-bottom:1px solid var(--border-color); flex-wrap:wrap; gap:8px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <h3 style="margin:0;">📦 ${mod.title}</h3>
+                  <span style="font-size:0.85rem; color:var(--text-muted);">(${mod.lessons.length} lecciones)</span>
+                </div>
+                <div style="display:flex; gap:6px;">
+                  <button class="btn btn-sm btn-ghost" onclick="window.app.moveModuleUp('${mod.id}')" ${modIdx === 0 ? 'disabled' : ''} title="Mover módulo arriba">
+                    ⬆️ Subir
+                  </button>
+                  <button class="btn btn-sm btn-ghost" onclick="window.app.moveModuleDown('${mod.id}')" ${modIdx === course.modules.length - 1 ? 'disabled' : ''} title="Mover módulo abajo">
+                    ⬇️ Bajar
+                  </button>
+                </div>
               </div>
 
               <div style="display:flex; flex-direction:column; gap:8px;">
-                ${mod.lessons.map(l => `
-                  <div class="flex-between" style="padding:10px 14px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-md);">
+                ${mod.lessons.map((l, lIdx) => `
+                  <div class="flex-between" style="padding:10px 14px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-md); flex-wrap:wrap; gap:8px;">
                     <div>
                       <strong>${l.title}</strong>
                       <div style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">
@@ -1591,7 +1668,13 @@ class SkoolApp {
                       </div>
                     </div>
 
-                    <div style="display:flex; gap:8px;">
+                    <div style="display:flex; gap:6px; align-items:center;">
+                      <button class="btn btn-sm btn-ghost" onclick="window.app.moveLessonUp('${mod.id}', '${l.id}')" ${lIdx === 0 ? 'disabled' : ''} title="Mover lección arriba">
+                        ⬆️
+                      </button>
+                      <button class="btn btn-sm btn-ghost" onclick="window.app.moveLessonDown('${mod.id}', '${l.id}')" ${lIdx === mod.lessons.length - 1 ? 'disabled' : ''} title="Mover lección abajo">
+                        ⬇️
+                      </button>
                       <button class="btn-nav-step" style="padding:6px 12px; font-size:0.8rem;" onclick="window.app.openEditLessonModal('${l.id}')">
                         <i data-lucide="edit-3"></i> Editar / Linkear Video
                       </button>
