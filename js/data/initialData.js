@@ -262,7 +262,7 @@ export const initialData = {
               id: "m3_l1",
               title: "LECCIÓN 1: Estructura del ecosistema Meta y creación de cuentas clave",
               type: "video_content",
-              videoUrl: "",
+              videoUrl: "https://www.youtube.com/watch?v=11HTA6JbvD8",
               summary: "Aprende a diferenciar la cuenta personal de los activos comerciales, crea tu Fanpage y tu perfil profesional de Instagram.",
               contentHTML: `
                 <div class="lesson-rich-content">
@@ -370,7 +370,7 @@ export const initialData = {
               id: "m3_l2",
               title: "LECCIÓN 2: Creación y configuración del Business Manager y Seguridad",
               type: "video_content",
-              videoUrl: "",
+              videoUrl: "https://www.youtube.com/watch?v=usmqsyZLYuY",
               summary: "Crea tu Portafolio Empresarial (Business Manager) en Meta Business Suite y blinda la cuenta con Autenticación en 2 Pasos (2FA).",
               contentHTML: `
                 <div class="lesson-rich-content">
@@ -462,7 +462,7 @@ export const initialData = {
               id: "m3_l3",
               title: "LECCIÓN 3: Configuración de WhatsApp Business y Cuenta Publicitaria",
               type: "video_content",
-              videoUrl: "",
+              videoUrl: "http://youtube.com/watch?v=5b08RIvwV2M",
               summary: "Configura tu línea de WhatsApp Business con catálogo de productos y crea tu Cuenta Publicitaria con moneda local y métodos de pago.",
               contentHTML: `
                 <div class="lesson-rich-content">
