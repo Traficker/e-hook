@@ -1,5 +1,6 @@
 import { loadState, saveState, resetToInitial } from './services/storage.js';
 import { renderVideoContainer } from './utils/video.js';
+import { getSupabase, isSupabaseReady } from './services/supabaseClient.js';
 
 class SkoolApp {
   constructor() {
@@ -14,12 +15,52 @@ class SkoolApp {
     this.searchQuery = '';
     this.searchActive = false;
 
+    // Supabase Auth State
+    this.authModalOpen = false;
+    this.authActiveTab = 'login';
+    this.authenticatedUser = null;
+    this.authError = null;
+    this.authLoading = false;
+
     this.init();
   }
 
   init() {
+    this.initSupabaseAuth();
     this.render();
     this.attachGlobalListeners();
+  }
+
+  async initSupabaseAuth() {
+    const supabase = getSupabase();
+    if (!supabase) return;
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        this.authenticatedUser = {
+          id: session.user.id,
+          email: session.user.email,
+          fullName: session.user.user_metadata?.full_name || session.user.email.split('@')[0]
+        };
+        this.render();
+      }
+
+      supabase.auth.onAuthStateChange((_event, session) => {
+        if (session?.user) {
+          this.authenticatedUser = {
+            id: session.user.id,
+            email: session.user.email,
+            fullName: session.user.user_metadata?.full_name || session.user.email.split('@')[0]
+          };
+        } else {
+          this.authenticatedUser = null;
+        }
+        this.render();
+      });
+    } catch (e) {
+      console.warn('Supabase Auth init:', e);
+    }
   }
 
   // --- State Persistence & Helpers ---
@@ -65,12 +106,165 @@ class SkoolApp {
       <main class="main-content">
         ${this.renderActiveTab()}
       </main>
+      ${this.renderAuthModal()}
     `;
 
-    // Re-initialize Lucide Icons after DOM update
+    // Re-initialize Lucide Icons for dynamic content
     if (window.lucide) {
       window.lucide.createIcons();
     }
+  }
+
+  // --- Auth Modal & Handlers ---
+  openAuthModal(tab = 'login') {
+    this.authModalOpen = true;
+    this.authActiveTab = tab;
+    this.authError = null;
+    this.render();
+  }
+
+  closeAuthModal() {
+    this.authModalOpen = false;
+    this.authError = null;
+    this.render();
+  }
+
+  switchAuthTab(tab) {
+    this.authActiveTab = tab;
+    this.authError = null;
+    this.render();
+  }
+
+  async handleAuthSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+    const email = form.email ? form.email.value.trim() : '';
+    const password = form.password ? form.password.value : '';
+    const fullName = form.fullName ? form.fullName.value.trim() : '';
+
+    const supabase = getSupabase();
+
+    if (!supabase) {
+      // Modo Demo Local: simula inicio de sesión localmente sin romper nada
+      this.authenticatedUser = {
+        id: 'demo_user_' + Date.now(),
+        email: email || 'demo@ehook.com',
+        fullName: fullName || (email ? email.split('@')[0] : 'Demo User')
+      };
+      this.closeAuthModal();
+      this.showToast(`✨ ¡Bienvenido/a, ${this.authenticatedUser.fullName}! (Modo Demo Local)`, 'success');
+      return;
+    }
+
+    this.authLoading = true;
+    this.authError = null;
+    this.render();
+
+    try {
+      if (this.authActiveTab === 'login') {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        this.authenticatedUser = {
+          id: data.user.id,
+          email: data.user.email,
+          fullName: data.user.user_metadata?.full_name || data.user.email.split('@')[0]
+        };
+        this.closeAuthModal();
+        this.showToast(`👋 ¡Hola de nuevo, ${this.authenticatedUser.fullName}!`, 'success');
+      } else {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { full_name: fullName }
+          }
+        });
+        if (error) throw error;
+        this.authenticatedUser = {
+          id: data.user?.id || 'new_user',
+          email,
+          fullName: fullName || email.split('@')[0]
+        };
+        this.closeAuthModal();
+        this.showToast(`🎉 ¡Cuenta creada con éxito! Bienvenido/a, ${this.authenticatedUser.fullName}`, 'success');
+      }
+    } catch (err) {
+      this.authError = err.message || 'Ocurrió un error en la autenticación.';
+      this.authLoading = false;
+      this.render();
+    }
+  }
+
+  async handleLogout() {
+    const supabase = getSupabase();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
+    this.authenticatedUser = null;
+    this.showToast('👋 Sesión cerrada correctamente', 'info');
+    this.render();
+  }
+
+  renderAuthModal() {
+    if (!this.authModalOpen) return '';
+
+    const isLogin = this.authActiveTab === 'login';
+
+    return `
+      <div class="modal-overlay" onclick="if(event.target === this) window.app.closeAuthModal()" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.65); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; z-index:9999;">
+        <div class="modal-card auth-modal-card animate-fade-in" style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:1.5rem; max-width:420px; width:90%; box-shadow:var(--shadow-xl);">
+          <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:1rem;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div class="brand-logo" style="width:32px; height:32px; font-size:0.85rem; font-weight:800; background:var(--accent-primary); color:#fff; border-radius:8px; display:inline-flex; align-items:center; justify-content:center;">EH</div>
+              <h3 style="margin:0; font-size:1.1rem; color:var(--text-main); font-weight:700;">Acceso a E-hook</h3>
+            </div>
+            <button class="btn-close" onclick="window.app.closeAuthModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; padding:4px 8px;">✕</button>
+          </div>
+
+          <div class="auth-tabs" style="display:flex; border-bottom:1px solid var(--border-color); margin-top:1rem;">
+            <button type="button" class="auth-tab-btn ${isLogin ? 'active' : ''}" 
+                    onclick="window.app.switchAuthTab('login')" 
+                    style="flex:1; padding:10px; background:none; border:none; border-bottom:2px solid ${isLogin ? 'var(--accent-primary)' : 'transparent'}; color:${isLogin ? 'var(--accent-primary)' : 'var(--text-muted)'}; font-weight:700; cursor:pointer; font-size:0.9rem;">
+              <i data-lucide="log-in" style="width:15px;height:15px;vertical-align:middle;margin-right:4px;"></i> Iniciar Sesión
+            </button>
+            <button type="button" class="auth-tab-btn ${!isLogin ? 'active' : ''}" 
+                    onclick="window.app.switchAuthTab('signup')" 
+                    style="flex:1; padding:10px; background:none; border:none; border-bottom:2px solid ${!isLogin ? 'var(--accent-primary)' : 'transparent'}; color:${!isLogin ? 'var(--accent-primary)' : 'var(--text-muted)'}; font-weight:700; cursor:pointer; font-size:0.9rem;">
+              <i data-lucide="user-plus" style="width:15px;height:15px;vertical-align:middle;margin-right:4px;"></i> Crear Cuenta
+            </button>
+          </div>
+
+          <form onsubmit="window.app.handleAuthSubmit(event)" style="margin-top:1.2rem;">
+            ${this.authError ? `
+              <div class="callout callout-danger" style="padding:10px; margin-bottom:1rem; background:rgba(239,68,68,0.1); border-left:3px solid var(--danger); font-size:0.85rem; color:var(--danger); border-radius:4px;">
+                ⚠️ ${this.authError}
+              </div>
+            ` : ''}
+
+            ${!isLogin ? `
+              <div class="form-group" style="margin-bottom:1rem;">
+                <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:4px; color:var(--text-main);">Nombre Completo</label>
+                <input type="text" name="fullName" class="form-control" placeholder="Ej: Carlos Mendoza" required style="width:100%; padding:10px; border-radius:var(--radius-md); border:1px solid var(--border-color); background:var(--bg-sidebar); color:var(--text-main); font-size:0.9rem;" />
+              </div>
+            ` : ''}
+
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:4px; color:var(--text-main);">Correo Electrónico</label>
+              <input type="email" name="email" class="form-control" placeholder="tu-correo@ejemplo.com" required style="width:100%; padding:10px; border-radius:var(--radius-md); border:1px solid var(--border-color); background:var(--bg-sidebar); color:var(--text-main); font-size:0.9rem;" />
+            </div>
+
+            <div class="form-group" style="margin-bottom:1.5rem;">
+              <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:4px; color:var(--text-main);">Contraseña</label>
+              <input type="password" name="password" class="form-control" placeholder="••••••••" required minlength="6" style="width:100%; padding:10px; border-radius:var(--radius-md); border:1px solid var(--border-color); background:var(--bg-sidebar); color:var(--text-main); font-size:0.9rem;" />
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width:100%; padding:12px; font-weight:700; display:flex; justify-content:center; align-items:center; gap:8px; border-radius:var(--radius-md);" ${this.authLoading ? 'disabled' : ''}>
+              ${this.authLoading ? '<span>Procesando...</span>' : (isLogin ? '🔑 Iniciar Sesión' : '🚀 Registrarme')}
+            </button>
+          </form>
+        </div>
+      </div>
+    `;
   }
 
   // --- Header & Navigation Bar ---
@@ -132,6 +326,25 @@ class SkoolApp {
             <span class="level-indicator">Nivel ${currentUser.level}</span>
             <span class="xp-amount">⚡ ${currentUser.xp} XP</span>
           </div>
+
+          ${this.authenticatedUser ? `
+            <div class="user-profile-menu" style="display:flex; align-items:center; gap:8px;">
+              <span class="avatar-circle" style="width:28px; height:28px; background:var(--accent-primary); color:#fff; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:800;">
+                ${(this.authenticatedUser.fullName || 'U').charAt(0).toUpperCase()}
+              </span>
+              <span style="font-size:0.85rem; font-weight:700; color:var(--text-main); max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                ${this.authenticatedUser.fullName}
+              </span>
+              <button class="btn btn-ghost btn-sm" onclick="window.app.handleLogout()" title="Cerrar Sesión" style="color:var(--danger); padding:4px 6px;">
+                <i data-lucide="log-out" style="width:16px; height:16px;"></i>
+              </button>
+            </div>
+          ` : `
+            <button class="btn btn-primary btn-sm btn-auth-trigger" onclick="window.app.openAuthModal('login')" style="gap:6px; font-weight:700;">
+              <i data-lucide="user" style="width:15px; height:15px;"></i>
+              <span>Iniciar Sesión</span>
+            </button>
+          `}
 
           <div class="role-switcher" onclick="window.app.toggleUserRole()" title="Haz clic para cambiar entre Estudiante y Administrador">
             <span class="role-pill ${!isAdmin ? 'active' : ''}">Estudiante</span>
