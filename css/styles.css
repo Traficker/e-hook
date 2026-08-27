@@ -1318,22 +1318,43 @@ button, input, select, textarea {
 
 .btn-primary-action {
   padding: 12px 24px;
-  background: var(--accent-gradient);
-  border: none;
-  color: #fff;
+  background: var(--accent-gradient) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
   font-weight: 700;
   border-radius: var(--radius-md);
   cursor: pointer;
+  box-shadow: 0 4px 14px var(--accent-glow) !important;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45) !important;
+  filter: brightness(1.1);
 }
 
 .btn-danger-action {
   padding: 8px 16px;
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid var(--danger);
-  color: var(--danger);
+  background: rgba(239, 68, 68, 0.15) !important;
+  border: 1px solid rgba(239, 68, 68, 0.4) !important;
+  color: var(--danger) !important;
   font-weight: 600;
   border-radius: var(--radius-md);
   cursor: pointer;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-danger-action:hover {
+  background: rgba(239, 68, 68, 0.3) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
 }
 
 /* Editor Visual No-Código & Toolbar Styles */
@@ -1640,4 +1661,93 @@ button, input, select, textarea {
   border-top: 1px solid var(--border-color);
   margin-top: auto;
 }
+
+/* ==========================================================================
+   STYLIZED BUTTON SYSTEM (MODERN DARK THEME)
+   ========================================================================== */
+
+/* Base Button Reset & Layout */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+  line-height: 1.2;
+}
+
+/* Primary Button (e.g. Crear Mi Propio Curso, Acciones Principales) */
+.btn-primary {
+  background: var(--accent-gradient) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 4px 14px var(--accent-glow) !important;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45) !important;
+  filter: brightness(1.1);
+}
+
+/* Ghost / Secondary Action Buttons (Subir, Bajar, Reordenar) */
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: var(--text-main) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-md) !important;
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  padding: 6px 12px !important;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.25) !important;
+  border-color: var(--accent-primary) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
+.btn-ghost:disabled {
+  opacity: 0.35 !important;
+  cursor: not-allowed !important;
+  border-color: transparent !important;
+  background: rgba(255, 255, 255, 0.02) !important;
+}
+
+/* Navigation Step / Secondary Solid Buttons */
+.btn-nav-step {
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-nav-step:hover {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: var(--accent-primary);
+  color: #ffffff;
+}
+
+/* Small Button Modifier */
+.btn-sm {
+  padding: 6px 12px !important;
+  font-size: 0.82rem !important;
+  border-radius: var(--radius-sm) !important;
+}
+
 

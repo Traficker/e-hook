@@ -1,6 +1,6 @@
 import { initialData } from '../data/initialData.js';
 
-const STORAGE_KEY = 'skoolx_platform_state_v15'; // Versión 15: Carga inmediata e higienización completa
+const STORAGE_KEY = 'skoolx_platform_state_v16'; // Versión 16: Sistema de botones estilizados en modo oscuro
 
 export function loadState() {
   try {
