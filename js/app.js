@@ -494,14 +494,23 @@ class SkoolApp {
       });
     });
 
-    // Calcular mapa de lecciones desbloqueadas
+    // Calcular mapa de lecciones desbloqueadas (los quizes requieren ser APROBADOS, no solo marcados)
     const unlockedMap = {};
     flatLessonsList.forEach((item, idx) => {
       if (idx === 0 || isAdmin) {
         unlockedMap[item.lesson.id] = true;
       } else {
-        const prevId = flatLessonsList[idx - 1].lesson.id;
-        unlockedMap[item.lesson.id] = completedSet.has(prevId);
+        const prevObj = flatLessonsList[idx - 1];
+        const prevId = prevObj.lesson.id;
+        
+        if (prevObj.lesson.type === 'quiz') {
+          // Exige que el quiz anterior esté APROBADO con la nota mínima
+          const isApproved = this.state.currentUser.passedQuizzes && 
+                             (this.state.currentUser.passedQuizzes[prevId] >= (prevObj.lesson.minScore || 70));
+          unlockedMap[item.lesson.id] = Boolean(isApproved && completedSet.has(prevId));
+        } else {
+          unlockedMap[item.lesson.id] = completedSet.has(prevId);
+        }
       }
     });
 
@@ -654,11 +663,17 @@ class SkoolApp {
               <i data-lucide="arrow-left"></i> Lección Anterior
             </button>
 
-            <button class="btn-complete-lesson ${isCompleted ? 'completed' : ''}"
-                    onclick="window.app.toggleCompleteLesson('${currentLesson.id}')">
-              <i data-lucide="${isCompleted ? 'check-circle' : 'circle'}"></i>
-              ${isCompleted ? 'Lección Completada' : 'Marcar como Completado (+50 XP)'}
-            </button>
+            ${currentLesson.type === 'quiz' ? `
+              <div style="font-size:0.85rem; font-weight:700; color:var(--text-muted); display:flex; align-items:center; gap:6px; padding:8px 14px; background:var(--bg-sidebar); border:1px solid var(--border-color); border-radius:var(--radius-md);">
+                ${isCompleted ? '🏆 Quiz Aprobado (+100 XP)' : '📝 Debes responder y aprobar el Quiz arriba para continuar'}
+              </div>
+            ` : `
+              <button class="btn-complete-lesson ${isCompleted ? 'completed' : ''}"
+                      onclick="window.app.toggleCompleteLesson('${currentLesson.id}')">
+                <i data-lucide="${isCompleted ? 'check-circle' : 'circle'}"></i>
+                ${isCompleted ? 'Lección Completada' : 'Marcar como Completado (+50 XP)'}
+              </button>
+            `}
 
             <button class="btn-nav-step" ${!nextItem ? 'disabled' : ''}
                     onclick="${nextItem ? (nextUnlocked ? `window.app.selectLesson('${nextItem.module.id}', '${nextItem.lesson.id}')` : `window.app.showLockedToast()`) : ''}">
