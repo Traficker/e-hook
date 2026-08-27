@@ -269,10 +269,26 @@ class SkoolApp {
     `;
   }
 
+  isUserAdmin(courseId = null) {
+    // Si no ha iniciado sesión, NINGÚN usuario es admin (todos son Estudiantes)
+    if (!this.authenticatedUser) return false;
+
+    const targetCourseId = courseId || this.selectedCourseId;
+    const course = this.state.courses.find(c => c.id === targetCourseId);
+
+    // Si el curso tiene un creador específico, solo ese creador es Admin de su curso
+    if (course && course.creator_id) {
+      return course.creator_id === this.authenticatedUser.id;
+    }
+
+    // Para el curso principal E-hook: Solo si el usuario autenticado tiene rol de creador/admin
+    return this.authenticatedUser.role === 'admin' || this.state.currentUser.role === 'admin';
+  }
+
   // --- Header & Navigation Bar ---
   renderHeader() {
     const { currentUser } = this.state;
-    const isAdmin = currentUser.role === 'admin';
+    const isAdmin = this.isUserAdmin();
 
     return `
       <header class="header-navbar">
@@ -347,11 +363,6 @@ class SkoolApp {
               <span>Iniciar Sesión</span>
             </button>
           `}
-
-          <div class="role-switcher" onclick="window.app.toggleUserRole()" title="Haz clic para cambiar entre Estudiante y Administrador">
-            <span class="role-pill ${!isAdmin ? 'active' : ''}">Estudiante</span>
-            <span class="role-pill ${isAdmin ? 'active' : ''}">Admin</span>
-          </div>
 
           <button class="theme-toggle-btn" onclick="window.app.toggleTheme()" title="Cambiar tema">
             <i data-lucide="moon"></i>
@@ -441,7 +452,7 @@ class SkoolApp {
   }
 
   renderLessonViewer(course) {
-    const isAdmin = this.state.currentUser.role === 'admin';
+    const isAdmin = this.isUserAdmin(course.id);
     const completedSet = new Set(this.state.currentUser.completedLessons || []);
 
     let currentModule = null;
@@ -818,7 +829,7 @@ class SkoolApp {
   // ==========================================================================
 
   renderNews() {
-    const isAdmin = this.state.currentUser.role === 'admin';
+    const isAdmin = this.isUserAdmin();
     const posts = this.state.newsPosts || [];
 
     // Sort: Pinned posts first
