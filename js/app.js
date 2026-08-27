@@ -22,6 +22,9 @@ class SkoolApp {
     this.authError = null;
     this.authLoading = false;
 
+    // Course Creator State
+    this.createCourseModalOpen = false;
+
     this.init();
   }
 
@@ -109,12 +112,140 @@ class SkoolApp {
         ${this.renderActiveTab()}
       </main>
       ${this.renderAuthModal()}
+      ${this.renderCreateCourseModal()}
     `;
 
     // Re-initialize Lucide Icons for dynamic content
     if (window.lucide) {
       window.lucide.createIcons();
     }
+  }
+
+  // --- Course Creator Modal & Handlers ---
+  openCreateCourseModal() {
+    if (!this.authenticatedUser) {
+      this.openAuthModal('signup');
+      this.showToast('🚀 Inicia sesión o crea una cuenta para crear tu propio curso', 'info');
+      return;
+    }
+    this.createCourseModalOpen = true;
+    this.render();
+  }
+
+  closeCreateCourseModal() {
+    this.createCourseModalOpen = false;
+    this.render();
+  }
+
+  async handleCreateCourseSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+    const title = form.title.value.trim();
+    const subtitle = form.subtitle.value.trim();
+    const badge = form.badge.value.trim() || 'E-learning';
+    const coverUrl = form.coverUrl.value.trim() || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=60';
+
+    if (!title || !subtitle) return;
+
+    const newCourseId = 'course_' + Date.now();
+    const creatorId = this.authenticatedUser ? this.authenticatedUser.id : 'demo_user';
+    const creatorName = this.authenticatedUser ? this.authenticatedUser.fullName : 'Creador';
+
+    const newCourse = {
+      id: newCourseId,
+      title: title,
+      subtitle: subtitle,
+      badge: badge,
+      coverUrl: coverUrl,
+      creator_id: creatorId,
+      creator_name: creatorName,
+      modules: [
+        {
+          id: 'mod_1_' + Date.now(),
+          title: 'MÓDULO 1: Introducción al Curso',
+          lessons: [
+            {
+              id: 'les_1_' + Date.now(),
+              title: 'Lección 1: Bienvenida e Instrucciones',
+              duration: '5 min',
+              type: 'video_content',
+              videoUrl: '',
+              pdfUrl: '',
+              contentHTML: '<h3>¡Bienvenido/a a ' + title + '!</h3><p>Este es tu propio curso. Ve al menú superior <strong>Administración</strong> para agregar más lecciones, videos de YouTube, PDFs o exámenes evaluativos.</p>',
+              checklist: ['Completar tu perfil de estudiante', 'Revisar el material del curso']
+            }
+          ]
+        }
+      ]
+    };
+
+    this.updateState(state => {
+      state.courses.push(newCourse);
+    });
+
+    // Intentar guardar en Supabase si está conectado
+    const supabase = getSupabase();
+    if (supabase && this.authenticatedUser) {
+      try {
+        await supabase.from('courses').upsert({
+          id: newCourseId,
+          title: title,
+          description: subtitle,
+          creator_id: creatorId,
+          created_at: new Date().toISOString()
+        });
+      } catch (err) {
+        console.warn('Persist course to Supabase:', err);
+      }
+    }
+
+    this.closeCreateCourseModal();
+    this.selectCourse(newCourseId);
+    this.showToast(`🎉 ¡Curso "${title}" creado con éxito! Eres el Creador/Administrador de este curso.`, 'success');
+  }
+
+  renderCreateCourseModal() {
+    if (!this.createCourseModalOpen) return '';
+
+    return `
+      <div class="modal-overlay" onclick="if(event.target === this) window.app.closeCreateCourseModal()" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.65); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; z-index:9999;">
+        <div class="modal-card animate-fade-in" style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:1.5rem; max-width:480px; width:90%; box-shadow:var(--shadow-xl);">
+          <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:1rem;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:1.4rem;">🎓</span>
+              <h3 style="margin:0; font-size:1.1rem; color:var(--text-main); font-weight:700;">Crear Mi Propio Curso</h3>
+            </div>
+            <button class="btn-close" onclick="window.app.closeCreateCourseModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;">✕</button>
+          </div>
+
+          <form onsubmit="window.app.handleCreateCourseSubmit(event)" style="margin-top:1.2rem;">
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:4px; color:var(--text-main);">Título del Curso</label>
+              <input type="text" name="title" class="form-control" placeholder="Ej: Máster en Meta Ads & Ecommerce 2026" required style="width:100%; padding:10px; border-radius:var(--radius-md); border:1px solid var(--border-color); background:var(--bg-sidebar); color:var(--text-main);" />
+            </div>
+
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:4px; color:var(--text-main);">Subtítulo / Descripción Corta</label>
+              <input type="text" name="subtitle" class="form-control" placeholder="Ej: Aprende a crear campañas publicitarias de alto retorno" required style="width:100%; padding:10px; border-radius:var(--radius-md); border:1px solid var(--border-color); background:var(--bg-sidebar); color:var(--text-main);" />
+            </div>
+
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:4px; color:var(--text-main);">Categoría / Etiqueta</label>
+              <input type="text" name="badge" class="form-control" placeholder="Ej: Marketing Digital, Ventas, Negocios" style="width:100%; padding:10px; border-radius:var(--radius-md); border:1px solid var(--border-color); background:var(--bg-sidebar); color:var(--text-main);" />
+            </div>
+
+            <div class="form-group" style="margin-bottom:1.5rem;">
+              <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:4px; color:var(--text-main);">URL de Imagen de Portada (Opcional)</label>
+              <input type="url" name="coverUrl" class="form-control" placeholder="https://images.unsplash.com/..." style="width:100%; padding:10px; border-radius:var(--radius-md); border:1px solid var(--border-color); background:var(--bg-sidebar); color:var(--text-main);" />
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width:100%; padding:12px; font-weight:700; display:flex; justify-content:center; align-items:center; gap:8px;">
+              🚀 Crear e Iniciar Administrador del Curso
+            </button>
+          </form>
+        </div>
+      </div>
+    `;
   }
 
   // --- Auth Modal & Handlers ---
@@ -432,52 +563,66 @@ class SkoolApp {
     const course = this.state.courses.find(c => c.id === this.selectedCourseId) || this.state.courses[0];
     if (!course) return '<p>No hay cursos disponibles.</p>';
 
-    // If user has chosen a specific lesson view inside a course
+    // Si el usuario ya entró a ver las lecciones de un curso específico
     if (this.selectedLessonId) {
       return this.renderLessonViewer(course);
     }
 
-    // Default Course Directory
-    const totalLessons = course.modules.reduce((acc, m) => acc + m.lessons.length, 0);
-    const completedCount = this.state.currentUser.completedLessons.length;
-    const progressPct = Math.min(100, Math.round((completedCount / (totalLessons || 1)) * 100));
-
+    // Catálogo General de Cursos
     return `
-      <div class="courses-header">
+      <div class="courses-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
         <div>
-          <h1>Catálogo de Cursos</h1>
-          <p>Aprende paso a paso con lecciones en video embebido y evaluaciones prácticas.</p>
+          <h1 style="margin:0; font-size:1.8rem; color:var(--text-main);">Catálogo de Cursos</h1>
+          <p style="color:var(--text-muted); margin-top:4px; font-size:0.95rem;">Explora los cursos disponibles o crea el tuyo propio para tu comunidad.</p>
         </div>
+        <button class="btn btn-primary" onclick="window.app.openCreateCourseModal()" style="display:flex; align-items:center; gap:8px; font-weight:700; padding:10px 18px; border-radius:var(--radius-md);">
+          <i data-lucide="plus-circle" style="width:18px; height:18px;"></i>
+          <span>➕ Crear Mi Propio Curso</span>
+        </button>
       </div>
 
-      <div class="courses-grid">
-        <div class="course-card" onclick="window.app.selectCourse('${course.id}')">
-          <img src="${course.coverUrl}" alt="${course.title}" class="course-banner-img" />
-          <div class="course-card-body">
-            <div class="course-badges">
-              <span class="badge-tag">${course.badge}</span>
-              <span class="badge-tag" style="background: rgba(16,185,129,0.15); color: var(--success); border-color: rgba(16,185,129,0.3);">
-                ${totalLessons} Lecciones
-              </span>
-            </div>
-            <h3 class="course-card-title">${course.title}</h3>
-            <p class="course-card-desc">${course.subtitle}</p>
+      <div class="courses-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:1.5rem;">
+        ${this.state.courses.map(c => {
+          const totalLessons = c.modules ? c.modules.reduce((acc, m) => acc + m.lessons.length, 0) : 0;
+          const isOwner = this.authenticatedUser && c.creator_id === this.authenticatedUser.id;
+          const isSelected = c.id === this.selectedCourseId;
+          const completedCount = this.state.currentUser.completedLessons ? this.state.currentUser.completedLessons.length : 0;
+          const progressPct = Math.min(100, Math.round((completedCount / (totalLessons || 1)) * 100));
 
-            <div class="progress-container">
-              <div class="progress-header">
-                <span>Tu Progreso</span>
-                <span>${progressPct}%</span>
-              </div>
-              <div class="progress-bar-bg">
-                <div class="progress-bar-fill" style="width: ${progressPct}%"></div>
+          return `
+            <div class="course-card ${isSelected ? 'selected-course-card' : ''}" onclick="window.app.selectCourse('${c.id}')" style="background:var(--bg-card); border:1px solid ${isSelected ? 'var(--accent-primary)' : 'var(--border-color)'}; border-radius:var(--radius-lg); overflow:hidden; transition:transform 0.2s ease, box-shadow 0.2s ease; cursor:pointer;">
+              <img src="${c.coverUrl || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=60'}" alt="${c.title}" class="course-banner-img" style="width:100%; height:160px; object-fit:cover;" />
+              <div class="course-card-body" style="padding:1.2rem;">
+                <div class="course-badges" style="display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+                  <span class="badge-tag">${c.badge || 'Curso'}</span>
+                  <span class="badge-tag" style="background: rgba(16,185,129,0.15); color: var(--success); border-color: rgba(16,185,129,0.3);">
+                    ${totalLessons} Lecciones
+                  </span>
+                  ${isOwner ? `<span class="badge-tag" style="background:rgba(99,102,241,0.2); color:var(--accent-primary);">👑 Tu Curso</span>` : ''}
+                </div>
+                <h3 class="course-card-title" style="font-size:1.15rem; margin:0 0 6px 0; color:var(--text-main); font-weight:700;">${c.title}</h3>
+                <p class="course-card-desc" style="font-size:0.85rem; color:var(--text-muted); line-height:1.4; margin-bottom:1rem; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${c.subtitle}</p>
+
+                <div class="progress-container" style="margin-bottom:1rem;">
+                  <div class="progress-header" style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted); margin-bottom:4px;">
+                    <span>Tu Avance</span>
+                    <span style="font-weight:700; color:var(--accent-primary);">${progressPct}%</span>
+                  </div>
+                  <div class="progress-bar-bg" style="width:100%; height:6px; background:rgba(255,255,255,0.1); border-radius:3px; overflow:hidden;">
+                    <div class="progress-bar-fill" style="width: ${progressPct}%; height:100%; background:linear-gradient(90deg, #6366f1, #10b981); transition:width 0.4s ease;"></div>
+                  </div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; color:var(--text-muted); border-top:1px solid var(--border-color); padding-top:10px;">
+                  <span>Por: <strong>${c.creator_name || 'E-hook'}</strong></span>
+                  <button class="btn btn-sm btn-primary" style="font-weight:700;">
+                    ${isOwner ? '⚙️ Administrar' : '▶️ Entrar al Curso'}
+                  </button>
+                </div>
               </div>
             </div>
-
-            <button class="btn-enter-course">
-              <i data-lucide="play-circle"></i> Entrar al Curso
-            </button>
-          </div>
-        </div>
+          `;
+        }).join('')}
       </div>
     `;
   }
