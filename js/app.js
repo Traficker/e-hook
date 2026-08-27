@@ -291,8 +291,17 @@ class SkoolApp {
       return course.creator_id === this.authenticatedUser.id;
     }
 
-    // Para el curso principal E-hook: Solo si el usuario autenticado tiene rol de creador/admin
-    return this.authenticatedUser.role === 'admin' || this.state.currentUser.role === 'admin';
+    // Para el curso base E-hook (course_ehook):
+    // ÚNICAMENTE es Admin si el correo de la cuenta iniciada es tu correo de Administrador
+    if (this.authenticatedUser.email) {
+      const userEmail = this.authenticatedUser.email.toLowerCase();
+      // Agrega tu correo exacto aquí o cuentas de tipo admin@
+      if (userEmail.startsWith('admin@') || this.authenticatedUser.role === 'admin') {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   // --- Header & Navigation Bar ---
