@@ -253,18 +253,21 @@ class SkoolApp {
     this.authModalOpen = true;
     this.authActiveTab = tab;
     this.authError = null;
+    this.authMessage = null;
     this.render();
   }
 
   closeAuthModal() {
     this.authModalOpen = false;
     this.authError = null;
+    this.authMessage = null;
     this.render();
   }
 
   switchAuthTab(tab) {
     this.authActiveTab = tab;
     this.authError = null;
+    this.authMessage = null;
     this.render();
   }
 
@@ -309,10 +312,21 @@ class SkoolApp {
           email,
           password,
           options: {
-            data: { full_name: fullName }
+            data: { full_name: fullName },
+            emailRedirectTo: 'https://traficker.github.io/e-hook/'
           }
         });
         if (error) throw error;
+
+        // Si Supabase exige confirmación por correo y no genera sesión inmediata
+        if (data?.user && !data.session) {
+          this.authError = null;
+          this.authMessage = `📧 ¡Cuenta creada con éxito! Te hemos enviado un correo de confirmación a <strong>${email}</strong>.<br><br>Por favor abre tu correo electrónico y haz clic en el enlace de verificación para activar tu cuenta e iniciar sesión.`;
+          this.authLoading = false;
+          this.render();
+          return;
+        }
+
         this.authenticatedUser = {
           id: data.user?.id || 'new_user',
           email,
@@ -378,6 +392,12 @@ class SkoolApp {
           </div>
 
           <form onsubmit="window.app.handleAuthSubmit(event)" style="margin-top:1.2rem;">
+            ${this.authMessage ? `
+              <div class="callout callout-accent" style="padding:12px; margin-bottom:1rem; background:rgba(99,102,241,0.1); border-left:3px solid var(--accent-primary); font-size:0.85rem; color:var(--text-main); border-radius:4px; line-height:1.4;">
+                ${this.authMessage}
+              </div>
+            ` : ''}
+
             ${this.authError ? `
               <div class="callout callout-danger" style="padding:10px; margin-bottom:1rem; background:rgba(239,68,68,0.1); border-left:3px solid var(--danger); font-size:0.85rem; color:var(--danger); border-radius:4px;">
                 ⚠️ ${this.authError}
