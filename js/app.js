@@ -292,13 +292,14 @@ class SkoolApp {
     }
 
     // Para el curso base E-hook (course_ehook):
-    // ÚNICAMENTE es Admin si el correo de la cuenta iniciada es tu correo de Administrador
-    if (this.authenticatedUser.email) {
+    // ÚNICAMENTE es Admin si el correo coincide exactamente con la lista blanca del Creador
+    const authorizedAdminEmails = [
+      'admin@ehook.com' // Correo exclusivo de administración
+    ];
+
+    if (this.authenticatedUser && this.authenticatedUser.email) {
       const userEmail = this.authenticatedUser.email.toLowerCase();
-      // Agrega tu correo exacto aquí o cuentas de tipo admin@
-      if (userEmail.startsWith('admin@') || this.authenticatedUser.role === 'admin') {
-        return true;
-      }
+      return authorizedAdminEmails.includes(userEmail);
     }
 
     return false;
