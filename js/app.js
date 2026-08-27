@@ -191,7 +191,17 @@ class SkoolApp {
         this.showToast(`🎉 ¡Cuenta creada con éxito! Bienvenido/a, ${this.authenticatedUser.fullName}`, 'success');
       }
     } catch (err) {
-      this.authError = err.message || 'Ocurrió un error en la autenticación.';
+      let msg = err.message || 'Ocurrió un error en la autenticación.';
+      
+      if (msg.includes('already registered') || msg.includes('already exists') || msg.includes('already in use')) {
+        msg = '⚠️ Este correo electrónico ya está registrado en E-hook. Por favor pasa a la pestaña "Iniciar Sesión".';
+      } else if (msg.includes('Invalid login credentials')) {
+        msg = '⚠️ Correo electrónico o contraseña incorrectos. Por favor verifica tus datos.';
+      } else if (msg.includes('Password should be at least')) {
+        msg = '⚠️ La contraseña debe tener al menos 6 caracteres.';
+      }
+
+      this.authError = msg;
       this.authLoading = false;
       this.render();
     }
