@@ -538,8 +538,8 @@ class SkoolApp {
               <span style="font-size:0.85rem; font-weight:700; color:var(--text-main); max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
                 ${this.authenticatedUser.fullName}
               </span>
-              <button class="btn btn-ghost btn-sm" onclick="window.app.handleLogout()" title="Cerrar Sesión" style="color:var(--danger); padding:4px 6px;">
-                <i data-lucide="log-out" style="width:16px; height:16px;"></i>
+              <button class="btn-logout" onclick="window.app.handleLogout()" title="Cerrar Sesión">
+                <i data-lucide="log-out" style="width:15px; height:15px;"></i>
               </button>
             </div>
           ` : `

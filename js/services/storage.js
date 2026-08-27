@@ -1,6 +1,6 @@
 import { initialData } from '../data/initialData.js';
 
-const STORAGE_KEY = 'skoolx_platform_state_v16'; // Versión 16: Sistema de botones estilizados en modo oscuro
+const STORAGE_KEY = 'skoolx_platform_state_v17'; // Versión 17: Estilos de botones de Iniciar Sesión y Cerrar Sesión en modo oscuro
 
 export function loadState() {
   try {
