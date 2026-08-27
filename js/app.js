@@ -292,9 +292,9 @@ class SkoolApp {
     }
 
     // Para el curso base E-hook (course_ehook):
-    // ÚNICAMENTE es Admin si el correo coincide exactamente con la lista blanca del Creador
+    // Dejado vacío intencionalmente: NADIE es Admin del curso base por ahora
     const authorizedAdminEmails = [
-      'admin@ehook.com' // Correo exclusivo de administración
+      // Lista vacía por solicitud del usuario
     ];
 
     if (this.authenticatedUser && this.authenticatedUser.email) {
