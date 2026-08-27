@@ -290,6 +290,11 @@ class SkoolApp {
     const { currentUser } = this.state;
     const isAdmin = this.isUserAdmin();
 
+    const course = this.state.courses.find(c => c.id === this.selectedCourseId) || this.state.courses[0];
+    const totalLessons = course ? course.modules.reduce((acc, m) => acc + m.lessons.length, 0) : 0;
+    const completedCount = currentUser.completedLessons ? currentUser.completedLessons.length : 0;
+    const progressPct = totalLessons > 0 ? Math.min(100, Math.round((completedCount / totalLessons) * 100)) : 0;
+
     return `
       <header class="header-navbar">
         <div class="nav-brand" onclick="window.app.switchTab('classroom')">
@@ -340,6 +345,16 @@ class SkoolApp {
         </nav>
 
         <div class="nav-right">
+          <!-- Indicador & Barra de Progreso del Curso -->
+          <div class="header-progress-box" title="Tu porcentaje de avance en el curso actual" style="display:flex; flex-direction:column; justify-content:center; gap:3px; padding:4px 10px; background:var(--bg-sidebar); border:1px solid var(--border-color); border-radius:var(--radius-md); min-width:125px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.72rem; font-weight:700; color:var(--text-muted);">
+              <span>Avance</span>
+              <span style="color:var(--accent-primary); font-weight:800;">${progressPct}%</span>
+            </div>
+            <div style="width:100%; height:6px; background:rgba(255,255,255,0.1); border-radius:3px; overflow:hidden;">
+              <div style="width:${progressPct}%; height:100%; background:linear-gradient(90deg, #6366f1, #10b981); transition:width 0.4s ease; border-radius:3px;"></div>
+            </div>
+          </div>
           <div class="user-xp-badge">
             <span class="level-indicator">Nivel ${currentUser.level}</span>
             <span class="xp-amount">⚡ ${currentUser.xp} XP</span>
