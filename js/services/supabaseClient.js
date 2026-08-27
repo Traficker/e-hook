@@ -1,8 +1,8 @@
 // Configuración de Supabase para E-hook
 // Pega aquí la URL y ANON_KEY que obtendrás en tu panel de Supabase (supabase.com)
 
-export const SUPABASE_URL = 'https://TU-PROYECTO.supabase.co';
-export const SUPABASE_ANON_KEY = 'TU-ANON-KEY-AQUI';
+export const SUPABASE_URL = 'https://khmlvywvcrhfgtvgydiw.supabase.co';
+export const SUPABASE_ANON_KEY = 'sb_publishable_t_QD6L43nIJWYHDXFuYsDg_d1oDacL6';
 
 let supabaseClient = null;
 
