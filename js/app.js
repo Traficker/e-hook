@@ -786,6 +786,7 @@ class SkoolApp {
   toggleCompleteLesson(lessonId) {
     let isNowCompleted = false;
     this.updateState(state => {
+      state.currentUser.rewardedXpLessons = state.currentUser.rewardedXpLessons || [];
       const idx = state.currentUser.completedLessons.indexOf(lessonId);
       if (idx > -1) {
         state.currentUser.completedLessons.splice(idx, 1);
@@ -793,7 +794,12 @@ class SkoolApp {
       } else {
         state.currentUser.completedLessons.push(lessonId);
         isNowCompleted = true;
-        this.addXP(50);
+        
+        // Entregar XP ÚNICAMENTE la primera vez que completa la lección (Anti-trampa)
+        if (!state.currentUser.rewardedXpLessons.includes(lessonId)) {
+          state.currentUser.rewardedXpLessons.push(lessonId);
+          this.addXP(50);
+        }
       }
     });
     this.syncProgressToSupabase(lessonId, isNowCompleted, 0);
