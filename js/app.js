@@ -43,16 +43,18 @@ class SkoolApp {
           email: session.user.email,
           fullName: session.user.user_metadata?.full_name || session.user.email.split('@')[0]
         };
+        await this.loadStudentProgressFromSupabase();
         this.render();
       }
 
-      supabase.auth.onAuthStateChange((_event, session) => {
+      supabase.auth.onAuthStateChange(async (_event, session) => {
         if (session?.user) {
           this.authenticatedUser = {
             id: session.user.id,
             email: session.user.email,
             fullName: session.user.user_metadata?.full_name || session.user.email.split('@')[0]
           };
+          await this.loadStudentProgressFromSupabase();
         } else {
           this.authenticatedUser = null;
         }
@@ -708,6 +710,7 @@ class SkoolApp {
         }
       });
       this.addXP(100);
+      this.syncProgressToSupabase(quizId, true, scorePct);
       this.showToast(`🎉 ¡Aprobaste la evaluación con ${scorePct}%!`, 'success');
     } else {
       this.showToast(`Obtuviste ${scorePct}%. Revisa el material e inténtalo de nuevo.`, 'warning');
@@ -718,6 +721,7 @@ class SkoolApp {
     this.updateState(state => {
       delete state.currentUser.passedQuizzes[quizId];
     });
+    this.syncProgressToSupabase(quizId, false, 0);
   }
 
   // --- Lesson Navigation Methods ---
@@ -744,15 +748,69 @@ class SkoolApp {
   }
 
   toggleCompleteLesson(lessonId) {
+    let isNowCompleted = false;
     this.updateState(state => {
       const idx = state.currentUser.completedLessons.indexOf(lessonId);
       if (idx > -1) {
         state.currentUser.completedLessons.splice(idx, 1);
+        isNowCompleted = false;
       } else {
         state.currentUser.completedLessons.push(lessonId);
+        isNowCompleted = true;
         this.addXP(50);
       }
     });
+    this.syncProgressToSupabase(lessonId, isNowCompleted, 0);
+  }
+
+  async syncProgressToSupabase(lessonId, isCompleted, quizScore = 0) {
+    const supabase = getSupabase();
+    if (!supabase || !this.authenticatedUser) return;
+
+    try {
+      await supabase.from('student_progress').upsert({
+        user_id: this.authenticatedUser.id,
+        course_id: this.selectedCourseId || 'course_ehook',
+        lesson_id: lessonId,
+        completed: isCompleted,
+        quiz_score: quizScore,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id,course_id,lesson_id' });
+    } catch (err) {
+      console.warn('Sync progress to Supabase:', err);
+    }
+  }
+
+  async loadStudentProgressFromSupabase() {
+    const supabase = getSupabase();
+    if (!supabase || !this.authenticatedUser) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('student_progress')
+        .select('*')
+        .eq('user_id', this.authenticatedUser.id);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const completedFromCloud = data.filter(d => d.completed).map(d => d.lesson_id);
+        const passedQuizzesFromCloud = {};
+        data.forEach(d => {
+          if (d.quiz_score > 0) {
+            passedQuizzesFromCloud[d.lesson_id] = d.quiz_score;
+          }
+        });
+
+        this.updateState(state => {
+          const mergedSet = new Set([...state.currentUser.completedLessons, ...completedFromCloud]);
+          state.currentUser.completedLessons = Array.from(mergedSet);
+          state.currentUser.passedQuizzes = { ...state.currentUser.passedQuizzes, ...passedQuizzesFromCloud };
+        });
+      }
+    } catch (err) {
+      console.warn('Load progress from Supabase:', err);
+    }
   }
 
   // ==========================================================================
