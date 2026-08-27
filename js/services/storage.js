@@ -1,6 +1,6 @@
 import { initialData } from '../data/initialData.js';
 
-const STORAGE_KEY = 'skoolx_platform_state_v14'; // Versión 14: Los 3 videos asignados correctamente en las lecciones del Módulo 3
+const STORAGE_KEY = 'skoolx_platform_state_v15'; // Versión 15: Carga inmediata e higienización completa
 
 export function loadState() {
   try {

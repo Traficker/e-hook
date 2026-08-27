@@ -2341,7 +2341,11 @@ class SkoolApp {
   }
 }
 
-// Instantiate App when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
+// Initialize App safely regardless of DOM ready timing
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    window.app = new SkoolApp();
+  });
+} else {
   window.app = new SkoolApp();
-});
+}
