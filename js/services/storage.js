@@ -1,6 +1,6 @@
 import { initialData } from '../data/initialData.js';
 
-const STORAGE_KEY = 'skoolx_platform_state_v17'; // Versión 17: Estilos de botones de Iniciar Sesión y Cerrar Sesión en modo oscuro
+const STORAGE_KEY = 'skoolx_platform_state_v18'; // Versión 18: Función exclusiva de Duplicar Cursos para Super Admin
 
 export function loadState() {
   try {

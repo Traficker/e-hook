@@ -47,6 +47,7 @@ class SkoolApp {
           fullName: session.user.user_metadata?.full_name || session.user.email.split('@')[0]
         };
         await this.loadStudentProgressFromSupabase();
+        await this.loadCoursesFromSupabase();
         this.render();
       }
 
@@ -58,6 +59,7 @@ class SkoolApp {
             fullName: session.user.user_metadata?.full_name || session.user.email.split('@')[0]
           };
           await this.loadStudentProgressFromSupabase();
+          await this.loadCoursesFromSupabase();
         } else {
           this.authenticatedUser = null;
         }
@@ -430,6 +432,12 @@ class SkoolApp {
     `;
   }
 
+  isUserSuperAdmin() {
+    if (!this.authenticatedUser || !this.authenticatedUser.email) return false;
+    const superAdminEmails = ['logitrafiker@gmail.com'];
+    return superAdminEmails.includes(this.authenticatedUser.email.toLowerCase().trim());
+  }
+
   isUserAdmin(courseId = null) {
     // Si no ha iniciado sesión, NINGÚN usuario es admin (todos son Estudiantes)
     if (!this.authenticatedUser) return false;
@@ -448,11 +456,129 @@ class SkoolApp {
     ];
 
     if (this.authenticatedUser && this.authenticatedUser.email) {
-      const userEmail = this.authenticatedUser.email.toLowerCase();
+      const userEmail = this.authenticatedUser.email.toLowerCase().trim();
       return authorizedAdminEmails.includes(userEmail);
     }
 
     return false;
+  }
+
+  async loadCoursesFromSupabase() {
+    const supabase = getSupabase();
+    if (!supabase) return;
+
+    try {
+      const { data, error } = await supabase.from('courses').select('*');
+      if (!error && data && data.length > 0) {
+        this.updateState(state => {
+          data.forEach(cloudCourse => {
+            const existingIdx = state.courses.findIndex(c => c.id === cloudCourse.id);
+            const formattedCourse = {
+              id: cloudCourse.id,
+              title: cloudCourse.title,
+              subtitle: cloudCourse.subtitle || cloudCourse.description || '',
+              badge: cloudCourse.badge || 'Oficial & Completo',
+              coverUrl: cloudCourse.cover_url || cloudCourse.coverUrl || 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1000&q=80',
+              creator_id: cloudCourse.creator_id,
+              creator_name: cloudCourse.creator_name || 'Super Admin',
+              modules: cloudCourse.modules || []
+            };
+            if (existingIdx > -1) {
+              state.courses[existingIdx] = formattedCourse;
+            } else {
+              state.courses.push(formattedCourse);
+            }
+          });
+        });
+      }
+    } catch (e) {
+      console.warn('loadCoursesFromSupabase:', e);
+    }
+  }
+
+  async duplicateCourse(courseId, event = null) {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+
+    // BLOQUEO ESTRICTO DE SEGURIDAD: Solo Super Admin
+    if (!this.isUserSuperAdmin()) {
+      console.warn('⛔ Acceso denegado: Solo el Super Admin puede duplicar cursos.');
+      this.showToast('⛔ Acceso denegado: Acción reservada exclusivamente para el Super Admin.', 'danger');
+      return;
+    }
+
+    const sourceCourse = this.state.courses.find(c => c.id === courseId);
+    if (!sourceCourse) {
+      this.showToast('❌ Error: Curso no encontrado para duplicar.', 'danger');
+      return;
+    }
+
+    const timestamp = Date.now();
+    const newCourseId = `course_dup_${timestamp}`;
+    const newTitle = `${sourceCourse.title} (Copia)`;
+
+    // Clonación profunda de módulos y lecciones regenerando IDs únicos
+    const duplicatedModules = (sourceCourse.modules || []).map((mod, modIdx) => {
+      const newModId = `mod_dup_${timestamp}_${modIdx + 1}`;
+      const duplicatedLessons = (mod.lessons || []).map((les, lesIdx) => {
+        const newLesId = `les_dup_${timestamp}_${modIdx + 1}_${lesIdx + 1}`;
+        return {
+          ...JSON.parse(JSON.stringify(les)),
+          id: newLesId
+        };
+      });
+
+      return {
+        ...JSON.parse(JSON.stringify(mod)),
+        id: newModId,
+        lessons: duplicatedLessons
+      };
+    });
+
+    const newCourse = {
+      ...JSON.parse(JSON.stringify(sourceCourse)),
+      id: newCourseId,
+      title: newTitle,
+      creator_id: this.authenticatedUser.id,
+      creator_name: this.authenticatedUser.fullName || 'Super Admin',
+      modules: duplicatedModules,
+      created_at: new Date().toISOString()
+    };
+
+    // Actualizar estado local
+    this.updateState(state => {
+      state.courses.push(newCourse);
+    });
+
+    // Guardar en Supabase si está disponible
+    const supabase = getSupabase();
+    if (supabase && this.authenticatedUser) {
+      try {
+        const { error } = await supabase.from('courses').upsert({
+          id: newCourse.id,
+          title: newCourse.title,
+          subtitle: newCourse.subtitle || '',
+          badge: newCourse.badge || 'Oficial & Completo',
+          cover_url: newCourse.coverUrl || '',
+          creator_id: this.authenticatedUser.id,
+          creator_name: newCourse.creator_name,
+          modules: newCourse.modules,
+          updated_at: new Date().toISOString()
+        });
+        if (error) {
+          console.warn('Nota: Curso guardado localmente. Estado tabla courses Supabase:', error.message);
+        } else {
+          console.log('✅ Curso duplicado y sincronizado exitosamente en Supabase.');
+        }
+      } catch (err) {
+        console.warn('Supabase course sync error:', err);
+      }
+    }
+
+    this.selectCourse(newCourseId);
+    this.showToast(`🎉 ¡Curso duplicado exitosamente con ${duplicatedModules.length} módulos completos!`, 'success');
   }
 
   // --- Header & Navigation Bar ---
@@ -632,11 +758,18 @@ class SkoolApp {
                   </div>
                 </div>
 
-                <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; color:var(--text-muted); border-top:1px solid var(--border-color); padding-top:10px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; color:var(--text-muted); border-top:1px solid var(--border-color); padding-top:10px; flex-wrap:wrap; gap:8px;">
                   <span>Por: <strong>${c.creator_name || 'E-hook'}</strong></span>
-                  <button class="btn btn-sm btn-primary" style="font-weight:700;">
-                    ${isOwner ? '⚙️ Administrar' : '▶️ Entrar al Curso'}
-                  </button>
+                  <div style="display:flex; gap:6px; align-items:center;">
+                    ${this.isUserSuperAdmin() ? `
+                      <button class="btn btn-sm btn-duplicate" onclick="window.app.duplicateCourse('${c.id}', event)" title="Duplicar este curso completo a la base de datos">
+                        📋 Duplicar
+                      </button>
+                    ` : ''}
+                    <button class="btn btn-sm btn-primary" style="font-weight:700;">
+                      ${isOwner ? '⚙️ Administrar' : '▶️ Entrar al Curso'}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1647,13 +1780,18 @@ class SkoolApp {
         <p>Crea nuevos cursos, reordena módulos y lecciones, añade contenido y linkea videos de YouTube/Vimeo.</p>
       </div>
 
-      <div class="admin-tabs">
+      <div class="admin-tabs" style="display:flex; gap:1rem; flex-wrap:wrap;">
         <button class="btn-primary-action" onclick="window.app.openCreateLessonModal()">
           <i data-lucide="plus-circle"></i> Añadir Nueva Lección con Video
         </button>
         <button class="btn-nav-step" onclick="window.app.openCreateModuleModal()">
           <i data-lucide="folder-plus"></i> Añadir Nuevo Módulo
         </button>
+        ${this.isUserSuperAdmin() ? `
+          <button class="btn-duplicate-action" onclick="window.app.duplicateCourse('${course.id}')" title="Duplicar este curso completo a la base de datos">
+            <i data-lucide="copy"></i> Duplicar Curso a Base de Datos
+          </button>
+        ` : ''}
       </div>
 
       <!-- Manage Lessons Table -->
