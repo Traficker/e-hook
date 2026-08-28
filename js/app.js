@@ -34,6 +34,37 @@ class SkoolApp {
     this.attachGlobalListeners();
   }
 
+  async fetchUserProfile(user) {
+    if (!user) return null;
+    const supabase = getSupabase();
+    let role = 'student';
+    let fullName = user.user_metadata?.full_name || (user.email ? user.email.split('@')[0] : 'Estudiante');
+
+    if (supabase) {
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role, full_name')
+          .eq('id', user.id)
+          .single();
+
+        if (profile) {
+          if (profile.role) role = profile.role;
+          if (profile.full_name) fullName = profile.full_name;
+        }
+      } catch (err) {
+        console.warn('Error al obtener perfil desde Supabase:', err);
+      }
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      fullName: fullName,
+      role: role
+    };
+  }
+
   async initSupabaseAuth() {
     const supabase = getSupabase();
     if (!supabase) return;
@@ -41,11 +72,7 @@ class SkoolApp {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        this.authenticatedUser = {
-          id: session.user.id,
-          email: session.user.email,
-          fullName: session.user.user_metadata?.full_name || session.user.email.split('@')[0]
-        };
+        this.authenticatedUser = await this.fetchUserProfile(session.user);
         await this.loadStudentProgressFromSupabase();
         await this.loadCoursesFromSupabase();
         this.render();
@@ -53,11 +80,7 @@ class SkoolApp {
 
       supabase.auth.onAuthStateChange(async (_event, session) => {
         if (session?.user) {
-          this.authenticatedUser = {
-            id: session.user.id,
-            email: session.user.email,
-            fullName: session.user.user_metadata?.full_name || session.user.email.split('@')[0]
-          };
+          this.authenticatedUser = await this.fetchUserProfile(session.user);
           await this.loadStudentProgressFromSupabase();
           await this.loadCoursesFromSupabase();
         } else {
@@ -302,11 +325,9 @@ class SkoolApp {
       if (this.authActiveTab === 'login') {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        this.authenticatedUser = {
-          id: data.user.id,
-          email: data.user.email,
-          fullName: data.user.user_metadata?.full_name || data.user.email.split('@')[0]
-        };
+        this.authenticatedUser = await this.fetchUserProfile(data.user);
+        await this.loadStudentProgressFromSupabase();
+        await this.loadCoursesFromSupabase();
         this.closeAuthModal();
         this.showToast(`👋 ¡Hola de nuevo, ${this.authenticatedUser.fullName}!`, 'success');
       } else {
@@ -329,11 +350,8 @@ class SkoolApp {
           return;
         }
 
-        this.authenticatedUser = {
-          id: data.user?.id || 'new_user',
-          email,
-          fullName: fullName || email.split('@')[0]
-        };
+        this.authenticatedUser = await this.fetchUserProfile(data.user);
+        await this.loadCoursesFromSupabase();
         this.closeAuthModal();
         this.showToast(`🎉 ¡Cuenta creada con éxito! Bienvenido/a, ${this.authenticatedUser.fullName}`, 'success');
       }
@@ -433,31 +451,23 @@ class SkoolApp {
   }
 
   isUserSuperAdmin() {
-    if (!this.authenticatedUser || !this.authenticatedUser.email) return false;
-    const superAdminEmails = ['logitrafiker@gmail.com'];
-    return superAdminEmails.includes(this.authenticatedUser.email.toLowerCase().trim());
+    if (!this.authenticatedUser) return false;
+    return this.authenticatedUser.role === 'superadmin';
   }
 
   isUserAdmin(courseId = null) {
-    // Si no ha iniciado sesión, NINGÚN usuario es admin (todos son Estudiantes)
+    // Si no ha iniciado sesión, NINGÚN usuario es admin
     if (!this.authenticatedUser) return false;
+
+    // Si el usuario tiene rol 'superadmin' en Supabase, tiene acceso de administración total
+    if (this.isUserSuperAdmin()) return true;
 
     const targetCourseId = courseId || this.selectedCourseId;
     const course = this.state.courses.find(c => c.id === targetCourseId);
 
-    // Si el curso tiene un creador específico, solo ese creador es Admin de su curso
+    // Si el usuario es el creador de este curso específico
     if (course && course.creator_id) {
       return course.creator_id === this.authenticatedUser.id;
-    }
-
-    // Lista Blanca Oficial del Super Administrador del Curso Prime
-    const authorizedAdminEmails = [
-      'logitrafiker@gmail.com' // Super Admin Oficial
-    ];
-
-    if (this.authenticatedUser && this.authenticatedUser.email) {
-      const userEmail = this.authenticatedUser.email.toLowerCase().trim();
-      return authorizedAdminEmails.includes(userEmail);
     }
 
     return false;

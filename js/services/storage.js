@@ -1,6 +1,6 @@
 import { initialData } from '../data/initialData.js';
 
-const STORAGE_KEY = 'skoolx_platform_state_v18'; // Versión 18: Función exclusiva de Duplicar Cursos para Super Admin
+const STORAGE_KEY = 'skoolx_platform_state_v19'; // Versión 19: Autenticación de Super Admin dinámica 100% desde Supabase
 
 export function loadState() {
   try {
