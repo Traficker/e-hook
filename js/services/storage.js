@@ -1,6 +1,6 @@
 import { initialData } from '../data/initialData.js';
 
-const STORAGE_KEY = 'skoolx_platform_state_v21'; // Versión 21: Preservación de posición del sidebar al cambiar de lección
+const STORAGE_KEY = 'skoolx_platform_state_v22'; // Versión 22: Centrado vertical de lección activa en la barra lateral
 
 export function loadState() {
   try {

@@ -160,12 +160,12 @@ class SkoolApp {
       window.lucide.createIcons();
     }
 
-    // Auto-scroll del sidebar hacia la lección activa para evitar que salte a Módulo 1
+    // Auto-scroll del sidebar hacia la lección activa posicionándola en el MEDIO de la pantalla
     const newSidebar = document.querySelector('.modules-sidebar');
     if (newSidebar) {
       const activeLessonEl = newSidebar.querySelector('.sidebar-lesson-item.active');
       if (activeLessonEl) {
-        activeLessonEl.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+        activeLessonEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
       } else if (prevScrollTop !== null) {
         newSidebar.scrollTop = prevScrollTop;
       }
