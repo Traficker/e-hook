@@ -1,6 +1,6 @@
 import { initialData } from '../data/initialData.js';
 
-const STORAGE_KEY = 'skoolx_platform_state_v22'; // Versión 22: Centrado vertical de lección activa en la barra lateral
+const STORAGE_KEY = 'skoolx_platform_state_v23'; // Versión 23: Mejoras UX de Modo Enfoque, Reanudar Lección, Atajos de Teclado, Confeti y Acordeón Inteligente
 
 export function loadState() {
   try {

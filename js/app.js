@@ -25,6 +25,9 @@ class SkoolApp {
     // Course Creator State
     this.createCourseModalOpen = false;
 
+    // Focus / Theater Mode State
+    this.isFocusMode = false;
+
     this.init();
   }
 
@@ -125,6 +128,16 @@ class SkoolApp {
     setTimeout(() => toast.remove(), 3500);
   }
 
+  triggerConfetti() {
+    if (window.confetti) {
+      window.confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+    }
+  }
+
   // --- XP & Gamification ---
   addXP(amount) {
     this.state.currentUser.xp += amount;
@@ -132,6 +145,7 @@ class SkoolApp {
     const newLevel = Math.floor(this.state.currentUser.xp / 200) + 1;
     if (newLevel > this.state.currentUser.level) {
       this.state.currentUser.level = newLevel;
+      this.triggerConfetti();
       this.showToast(`🎉 ¡Felicidades! Subiste al Nivel ${newLevel}`, 'success');
     } else {
       this.showToast(`+${amount} Puntos XP ganados!`, 'success');
@@ -749,8 +763,42 @@ class SkoolApp {
       return this.renderLessonViewer(course);
     }
 
+    // Buscar la lección sugerida para reanudar
+    let resumeMod = course.modules ? course.modules[0] : null;
+    let resumeLes = resumeMod?.lessons ? resumeMod.lessons[0] : null;
+    const completedSet = new Set(this.state.currentUser.completedLessons || []);
+    if (course.modules) {
+      for (const m of course.modules) {
+        for (const l of m.lessons) {
+          if (!completedSet.has(l.id)) {
+            resumeMod = m;
+            resumeLes = l;
+            break;
+          }
+        }
+        if (resumeLes && !completedSet.has(resumeLes.id)) break;
+      }
+    }
+
     // Catálogo General de Cursos
     return `
+      ${resumeLes ? `
+        <!-- Banner Reanudar Clase -->
+        <div class="resume-learning-banner" onclick="window.app.selectLesson('${resumeMod.id}', '${resumeLes.id}')">
+          <div class="resume-left">
+            <div class="resume-icon">⚡</div>
+            <div>
+              <div class="resume-tag">CONTINUAR DONDE LO DEJASTE</div>
+              <h3 class="resume-title">${resumeLes.title}</h3>
+              <span class="resume-mod">${course.title} • ${resumeMod.title}</span>
+            </div>
+          </div>
+          <button class="btn btn-primary resume-btn">
+            ▶️ Reanudar Lección
+          </button>
+        </div>
+      ` : ''}
+
       <div class="courses-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
         <div>
           <h1 style="margin:0; font-size:1.8rem; color:var(--text-main);">Catálogo de Cursos</h1>
@@ -874,7 +922,7 @@ class SkoolApp {
     const nextUnlocked = nextItem ? unlockedMap[nextItem.lesson.id] : false;
 
     return `
-      <div class="lesson-layout">
+      <div class="lesson-layout ${this.isFocusMode ? 'focus-mode' : ''}">
         <!-- Sidebar Accordion of Modules & Lessons -->
         <aside class="modules-sidebar">
           <div class="sidebar-title">
@@ -891,7 +939,7 @@ class SkoolApp {
                   <span>${mod.title}</span>
                   <i data-lucide="chevron-down" style="width:16px;"></i>
                 </div>
-                <div class="module-accordion-body" id="drawer-${mod.id}">
+                <div class="module-accordion-body" id="drawer-${mod.id}" style="${mod.id === currentModule.id ? 'display:flex;' : 'display:none;'}">
                   ${mod.lessons.map(l => {
                     const lDone = completedSet.has(l.id);
                     const lUnlocked = unlockedMap[l.id];
@@ -920,11 +968,17 @@ class SkoolApp {
               <span class="lesson-meta-module">${currentModule.title}</span>
               <h1 class="lesson-main-title">${currentLesson.title}</h1>
             </div>
-            ${this.state.currentUser.role === 'admin' ? `
-              <button class="btn-nav-step" onclick="window.app.openEditLessonModal('${currentLesson.id}')" style="border-color:var(--warning); color:var(--warning);">
-                <i data-lucide="edit-3"></i> Editar Lección / Video URL
+            <div style="display:flex; gap:8px; align-items:center;">
+              <button class="btn-focus-mode ${this.isFocusMode ? 'active' : ''}" onclick="window.app.toggleFocusMode()" title="Expandir/Ocultar Menú (Atajo: F)">
+                <i data-lucide="${this.isFocusMode ? 'minimize-2' : 'maximize-2'}" style="width:15px; height:15px;"></i>
+                <span>${this.isFocusMode ? 'Mostrar Menú' : 'Modo Enfoque'}</span>
               </button>
-            ` : ''}
+              ${this.state.currentUser.role === 'admin' ? `
+                <button class="btn-nav-step" onclick="window.app.openEditLessonModal('${currentLesson.id}')" style="border-color:var(--warning); color:var(--warning);">
+                  <i data-lucide="edit-3"></i> Editar Lección / Video URL
+                </button>
+              ` : ''}
+            </div>
           </div>
 
           <p class="lesson-summary-p">${currentLesson.summary || ''}</p>
@@ -1023,6 +1077,15 @@ class SkoolApp {
               Siguiente Lección ${!nextUnlocked && nextItem ? '🔒' : ''} <i data-lucide="arrow-right"></i>
             </button>
           </div>
+
+          <div class="keyboard-shortcuts-hint">
+            <span>⌨️ Atajos:</span>
+            <span><span class="kbd-badge">←</span> Lección anterior</span>
+            <span><span class="kbd-badge">→</span> Siguiente lección</span>
+            <span><span class="kbd-badge">M</span> Completar</span>
+            <span><span class="kbd-badge">F</span> Modo Enfoque</span>
+            <span><span class="kbd-badge">Ctrl + K</span> Buscar</span>
+          </div>
         </section>
       </div>
     `;
@@ -1104,8 +1167,9 @@ class SkoolApp {
         }
       });
       this.addXP(100);
+      this.triggerConfetti();
       this.syncProgressToSupabase(quizId, true, scorePct);
-      this.showToast(`🎉 ¡Aprobaste la evaluación con ${scorePct}%!`, 'success');
+      this.showToast(`🎉 ¡Aprobaste la evaluación con ${scorePct}%! (+100 XP)`, 'success');
     } else {
       this.showToast(`Obtuviste ${scorePct}%. Revisa el material e inténtalo de nuevo.`, 'warning');
     }
@@ -1116,6 +1180,12 @@ class SkoolApp {
       delete state.currentUser.passedQuizzes[quizId];
     });
     this.syncProgressToSupabase(quizId, false, 0);
+  }
+
+  // --- Focus / Theater Mode ---
+  toggleFocusMode() {
+    this.isFocusMode = !this.isFocusMode;
+    this.render();
   }
 
   // --- Lesson Navigation Methods ---
@@ -1141,6 +1211,30 @@ class SkoolApp {
     this.render();
   }
 
+  goToNextLesson() {
+    const course = this.state.courses.find(c => c.id === this.selectedCourseId) || this.state.courses[0];
+    if (!course) return;
+    const flat = [];
+    course.modules.forEach(m => m.lessons.forEach(l => flat.push({ mod: m, les: l })));
+    const idx = flat.findIndex(i => i.les.id === this.selectedLessonId);
+    if (idx > -1 && idx < flat.length - 1) {
+      const next = flat[idx + 1];
+      this.selectLesson(next.mod.id, next.les.id);
+    }
+  }
+
+  goToPrevLesson() {
+    const course = this.state.courses.find(c => c.id === this.selectedCourseId) || this.state.courses[0];
+    if (!course) return;
+    const flat = [];
+    course.modules.forEach(m => m.lessons.forEach(l => flat.push({ mod: m, les: l })));
+    const idx = flat.findIndex(i => i.les.id === this.selectedLessonId);
+    if (idx > 0) {
+      const prev = flat[idx - 1];
+      this.selectLesson(prev.mod.id, prev.les.id);
+    }
+  }
+
   toggleCompleteLesson(lessonId) {
     let isNowCompleted = false;
     this.updateState(state => {
@@ -1157,6 +1251,7 @@ class SkoolApp {
         if (!state.currentUser.rewardedXpLessons.includes(lessonId)) {
           state.currentUser.rewardedXpLessons.push(lessonId);
           this.addXP(50);
+          this.triggerConfetti();
         }
       }
     });
@@ -2612,6 +2707,43 @@ class SkoolApp {
         this.searchActive = false;
         const drop = document.getElementById('search-results-dropdown');
         if (drop) drop.style.display = 'none';
+      }
+    });
+
+    // Atajos de Teclado Globales
+    document.addEventListener('keydown', (e) => {
+      // Ignorar si el usuario está escribiendo en un input, textarea o formulario
+      const tag = e.target.tagName ? e.target.tagName.toLowerCase() : '';
+      if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
+
+      // Ctrl + K o Cmd + K: Abrir buscador
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        const searchInput = document.getElementById('global-search-input');
+        if (searchInput) {
+          searchInput.focus();
+          searchInput.select();
+        }
+        return;
+      }
+
+      // Atajos activos únicamente al estar viendo una lección
+      if (this.currentTab === 'classroom' && this.selectedLessonId) {
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          this.goToNextLesson();
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          this.goToPrevLesson();
+        } else if (e.key.toLowerCase() === 'm' || e.key.toLowerCase() === 'c') {
+          e.preventDefault();
+          if (this.selectedLessonId) {
+            this.toggleCompleteLesson(this.selectedLessonId);
+          }
+        } else if (e.key.toLowerCase() === 'f') {
+          e.preventDefault();
+          this.toggleFocusMode();
+        }
       }
     });
   }
