@@ -1,6 +1,6 @@
 import { initialData } from '../data/initialData.js';
 
-const STORAGE_KEY = 'skoolx_platform_state_v24'; // Versión 24: Completado permanente de lecciones blindado contra spam
+const STORAGE_KEY = 'skoolx_platform_state_v25'; // Versión 25: Límite de cursos por usuario y bloqueo antispam en evaluaciones
 
 export function loadState() {
   try {

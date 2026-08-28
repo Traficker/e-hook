@@ -205,12 +205,28 @@ class SkoolApp {
   async handleCreateCourseSubmit(e) {
     e.preventDefault();
     const form = e.target;
-    const title = form.title.value.trim();
-    const subtitle = form.subtitle.value.trim();
-    const badge = form.badge.value.trim() || 'E-learning';
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+
+    // Límite de seguridad: máximo 5 cursos por usuario normal (Super Admin ilimitado)
+    if (!this.isUserSuperAdmin() && this.authenticatedUser) {
+      const ownedCount = this.state.courses.filter(c => c.creator_id === this.authenticatedUser.id).length;
+      if (ownedCount >= 5) {
+        this.showToast('⚠️ Has alcanzado el límite máximo de 5 cursos creados por cuenta.', 'warning');
+        if (submitBtn) submitBtn.disabled = false;
+        return;
+      }
+    }
+
+    const title = this.sanitizeHTML(form.title.value.trim());
+    const subtitle = this.sanitizeHTML(form.subtitle.value.trim());
+    const badge = this.sanitizeHTML(form.badge.value.trim() || 'E-learning');
     const coverUrl = form.coverUrl.value.trim() || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=60';
 
-    if (!title || !subtitle) return;
+    if (!title || !subtitle) {
+      if (submitBtn) submitBtn.disabled = false;
+      return;
+    }
 
     const newCourseId = 'course_' + Date.now();
     const creatorId = this.authenticatedUser ? this.authenticatedUser.id : 'demo_user';
@@ -1152,6 +1168,12 @@ class SkoolApp {
     });
 
     if (!quizLesson) return;
+
+    // BLOQUEO ESTRICTO ANTISPAM: Si ya está aprobado, no hacer nada ni saturar Supabase
+    if (this.state.currentUser.passedQuizzes && this.state.currentUser.passedQuizzes[quizId] >= (quizLesson.minScore || 70)) {
+      this.showToast('🏆 Ya has aprobado esta evaluación previamente.', 'info');
+      return;
+    }
 
     const formData = new FormData(e.target);
     let correctCount = 0;
