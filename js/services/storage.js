@@ -1,6 +1,6 @@
 import { initialData } from '../data/initialData.js';
 
-const STORAGE_KEY = 'skoolx_platform_state_v23'; // Versión 23: Mejoras UX de Modo Enfoque, Reanudar Lección, Atajos de Teclado, Confeti y Acordeón Inteligente
+const STORAGE_KEY = 'skoolx_platform_state_v24'; // Versión 24: Completado permanente de lecciones blindado contra spam
 
 export function loadState() {
   try {

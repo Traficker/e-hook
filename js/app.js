@@ -1064,13 +1064,19 @@ class SkoolApp {
               <div style="font-size:0.85rem; font-weight:700; color:var(--text-muted); display:flex; align-items:center; gap:6px; padding:8px 14px; background:var(--bg-sidebar); border:1px solid var(--border-color); border-radius:var(--radius-md);">
                 ${isCompleted ? '🏆 Quiz Aprobado (+100 XP)' : '📝 Debes responder y aprobar el Quiz arriba para continuar'}
               </div>
-            ` : `
-              <button class="btn-complete-lesson ${isCompleted ? 'completed' : ''}"
-                      onclick="window.app.toggleCompleteLesson('${currentLesson.id}')">
-                <i data-lucide="${isCompleted ? 'check-circle' : 'circle'}"></i>
-                ${isCompleted ? 'Lección Completada' : 'Marcar como Completado (+50 XP)'}
+            ` : (isCompleted ? `
+              <button class="btn-complete-lesson completed" disabled style="cursor:default; opacity:0.95;" title="Esta lección ya ha sido completada">
+                <i data-lucide="check-circle"></i>
+                Lección Completada ✓
               </button>
-            `}
+            ` : `
+              <button class="btn-complete-lesson"
+                      onclick="window.app.toggleCompleteLesson('${currentLesson.id}')"
+                      title="Marcar como completado y ganar +50 XP">
+                <i data-lucide="circle"></i>
+                Marcar como Completado (+50 XP)
+              </button>
+            `)}
 
             <button class="btn-nav-step" ${!nextItem ? 'disabled' : ''}
                     onclick="${nextItem ? (nextUnlocked ? `window.app.selectLesson('${nextItem.module.id}', '${nextItem.lesson.id}')` : `window.app.showLockedToast()`) : ''}">
@@ -1236,26 +1242,27 @@ class SkoolApp {
   }
 
   toggleCompleteLesson(lessonId) {
-    let isNowCompleted = false;
+    if (!lessonId) return;
+
+    // BLOQUEO ESTRICTO ANTISPAM: Si ya está completada, no hacer nada ni consultar la base de datos
+    if (this.state.currentUser.completedLessons.includes(lessonId)) {
+      return;
+    }
+
     this.updateState(state => {
       state.currentUser.rewardedXpLessons = state.currentUser.rewardedXpLessons || [];
-      const idx = state.currentUser.completedLessons.indexOf(lessonId);
-      if (idx > -1) {
-        state.currentUser.completedLessons.splice(idx, 1);
-        isNowCompleted = false;
-      } else {
-        state.currentUser.completedLessons.push(lessonId);
-        isNowCompleted = true;
-        
-        // Entregar XP ÚNICAMENTE la primera vez que completa la lección (Anti-trampa)
-        if (!state.currentUser.rewardedXpLessons.includes(lessonId)) {
-          state.currentUser.rewardedXpLessons.push(lessonId);
-          this.addXP(50);
-          this.triggerConfetti();
-        }
+      state.currentUser.completedLessons.push(lessonId);
+
+      // Entregar XP ÚNICAMENTE la primera vez que completa la lección (Anti-trampa)
+      if (!state.currentUser.rewardedXpLessons.includes(lessonId)) {
+        state.currentUser.rewardedXpLessons.push(lessonId);
+        this.addXP(50);
+        this.triggerConfetti();
       }
     });
-    this.syncProgressToSupabase(lessonId, isNowCompleted, 0);
+
+    this.showToast('✅ ¡Lección completada con éxito! (+50 XP)', 'success');
+    this.syncProgressToSupabase(lessonId, true, 0);
   }
 
   async syncProgressToSupabase(lessonId, isCompleted, quizScore = 0) {
