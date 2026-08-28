@@ -94,6 +94,17 @@ class SkoolApp {
   }
 
   // --- State Persistence & Helpers ---
+  sanitizeHTML(html) {
+    if (!html) return '';
+    if (window.DOMPurify) {
+      return window.DOMPurify.sanitize(html, {
+        ADD_TAGS: ['iframe'],
+        ADD_ATTR: ['allow', 'allowfullscreen', 'frameborder', 'scrolling', 'target', 'style', 'class']
+      });
+    }
+    return html;
+  }
+
   updateState(fn) {
     fn(this.state);
     saveState(this.state);
@@ -955,7 +966,7 @@ class SkoolApp {
           <!-- Rich Text Content or Quiz -->
           ${currentLesson.type === 'quiz' ? this.renderQuiz(currentLesson) : `
             <div class="lesson-rich-content">
-              ${currentLesson.contentHTML || '<p>Contenido de la lección.</p>'}
+              ${this.sanitizeHTML(currentLesson.contentHTML) || '<p>Contenido de la lección.</p>'}
             </div>
 
             ${currentLesson.checklist && currentLesson.checklist.length > 0 ? `
