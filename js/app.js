@@ -141,6 +141,10 @@ class SkoolApp {
 
   // --- Main Render Engine ---
   render() {
+    // Capturar la posición de scroll previa del sidebar si existe
+    const prevSidebar = document.querySelector('.modules-sidebar');
+    const prevScrollTop = prevSidebar ? prevSidebar.scrollTop : null;
+
     const appEl = document.getElementById('app');
     appEl.innerHTML = `
       ${this.renderHeader()}
@@ -154,6 +158,17 @@ class SkoolApp {
     // Re-initialize Lucide Icons for dynamic content
     if (window.lucide) {
       window.lucide.createIcons();
+    }
+
+    // Auto-scroll del sidebar hacia la lección activa para evitar que salte a Módulo 1
+    const newSidebar = document.querySelector('.modules-sidebar');
+    if (newSidebar) {
+      const activeLessonEl = newSidebar.querySelector('.sidebar-lesson-item.active');
+      if (activeLessonEl) {
+        activeLessonEl.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+      } else if (prevScrollTop !== null) {
+        newSidebar.scrollTop = prevScrollTop;
+      }
     }
   }
 

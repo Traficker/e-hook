@@ -1,6 +1,6 @@
 import { initialData } from '../data/initialData.js';
 
-const STORAGE_KEY = 'skoolx_platform_state_v20'; // Versión 20: Curso Prime Definitivo 100% sincronizado con documento PDF
+const STORAGE_KEY = 'skoolx_platform_state_v21'; // Versión 21: Preservación de posición del sidebar al cambiar de lección
 
 export function loadState() {
   try {
