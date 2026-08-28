@@ -1,6 +1,6 @@
 import { initialData } from '../data/initialData.js';
 
-const STORAGE_KEY = 'skoolx_platform_state_v19'; // Versión 19: Autenticación de Super Admin dinámica 100% desde Supabase
+const STORAGE_KEY = 'skoolx_platform_state_v20'; // Versión 20: Curso Prime Definitivo 100% sincronizado con documento PDF
 
 export function loadState() {
   try {

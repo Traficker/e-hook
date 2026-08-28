@@ -33,7 +33,10 @@ export const initialData = {
               id: "m1_l1",
               title: "LECCIÓN 1: Mejora tu relación con el dinero",
               type: "video_content",
-              videoUrl: "",
+              videoUrl: "https://www.youtube.com/watch?v=4xcoCWdFrpM",
+              videoUrls: [
+                "https://www.youtube.com/watch?v=4xcoCWdFrpM"
+              ],
               summary: "Descubre por qué miles de personas utilizan el comercio electrónico para generar ingresos adicionales y cómo empezar a pensar como un creador de activos digitales.",
               contentHTML: `
                 <div class="lesson-rich-content">
@@ -96,10 +99,10 @@ export const initialData = {
               id: "m2_l1",
               title: "LECCIÓN 1: Origen del comercio electrónico y modelos de negocio (B2B, B2C, C2C y C2B)",
               type: "video_content",
-              videoUrl: "https://www.youtube.com/watch?v=2v-oZ0sO0Kk",
+              videoUrl: "https://www.youtube.com/watch?v=ADj7Nyyh8IM",
               videoUrls: [
-                "https://www.youtube.com/watch?v=2v-oZ0sO0Kk",
-                "https://www.youtube.com/watch?v=3JZ_D3ELwOQ"
+                "https://www.youtube.com/watch?v=ADj7Nyyh8IM",
+                "https://www.youtube.com/watch?v=I26xiKYK-cc"
               ],
               summary: "Dominio conceptual de e-commerce, omnicanalidad, protocolo SSL y clasificación precisa de modelos comerciales (B2B, B2C, C2C, B2B).",
               contentHTML: `
@@ -262,7 +265,11 @@ export const initialData = {
               id: "m3_l1",
               title: "LECCIÓN 1: Estructura del ecosistema Meta y creación de cuentas clave",
               type: "video_content",
-              videoUrl: "https://www.youtube.com/watch?v=11HTA6JbvD8",
+              videoUrl: "https://www.youtube.com/watch?v=Wgz_uQ6jpRY",
+              videoUrls: [
+                "https://www.youtube.com/watch?v=Wgz_uQ6jpRY",
+                "https://www.youtube.com/watch?v=6gIf2GCwtxQ"
+              ],
               summary: "Aprende a diferenciar la cuenta personal de los activos comerciales, crea tu Fanpage y tu perfil profesional de Instagram.",
               contentHTML: `
                 <div class="lesson-rich-content">
@@ -370,7 +377,11 @@ export const initialData = {
               id: "m3_l2",
               title: "LECCIÓN 2: Creación y configuración del Business Manager y Seguridad",
               type: "video_content",
-              videoUrl: "https://www.youtube.com/watch?v=usmqsyZLYuY",
+              videoUrl: "https://www.youtube.com/watch?v=6QgWlc2rTwE",
+              videoUrls: [
+                "https://www.youtube.com/watch?v=6QgWlc2rTwE",
+                "https://www.youtube.com/watch?v=GEATGiaj8qg"
+              ],
               summary: "Crea tu Portafolio Empresarial (Business Manager) en Meta Business Suite y blinda la cuenta con Autenticación en 2 Pasos (2FA).",
               contentHTML: `
                 <div class="lesson-rich-content">
@@ -462,7 +473,11 @@ export const initialData = {
               id: "m3_l3",
               title: "LECCIÓN 3: Configuración de WhatsApp Business y Cuenta Publicitaria",
               type: "video_content",
-              videoUrl: "http://youtube.com/watch?v=5b08RIvwV2M",
+              videoUrl: "https://www.youtube.com/watch?v=LTlaZ8ADRwo",
+              videoUrls: [
+                "https://www.youtube.com/watch?v=LTlaZ8ADRwo",
+                "https://www.youtube.com/watch?v=CcdGYXw-k6w"
+              ],
               summary: "Configura tu línea de WhatsApp Business con catálogo de productos y crea tu Cuenta Publicitaria con moneda local y métodos de pago.",
               contentHTML: `
                 <div class="lesson-rich-content">
@@ -548,7 +563,11 @@ export const initialData = {
               id: "m3_l4",
               title: "LECCIÓN 4: Conecta todo el ecosistema y checklist de lanzamiento",
               type: "video_content",
-              videoUrl: "",
+              videoUrl: "https://www.youtube.com/watch?v=7TcxljtV4jk",
+              videoUrls: [
+                "https://www.youtube.com/watch?v=7TcxljtV4jk",
+                "https://www.youtube.com/watch?v=_9NjKoyLJBY"
+              ],
               summary: "Vincula tu Fanpage, Instagram y WhatsApp dentro del Business Manager, asígnate todos los permisos y prepara el lanzamiento.",
               contentHTML: `
                 <div class="lesson-rich-content">
