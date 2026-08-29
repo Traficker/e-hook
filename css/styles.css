@@ -1839,6 +1839,52 @@ button, input, select, textarea {
   transform: translateY(-1px);
 }
 
+/* Delete Course Buttons (Creator & Super Admin) */
+.btn-delete-course {
+  padding: 5px 9px !important;
+  background: rgba(239, 68, 68, 0.12) !important;
+  border: 1px solid rgba(239, 68, 68, 0.35) !important;
+  color: var(--danger) !important;
+  font-weight: 700 !important;
+  border-radius: var(--radius-md) !important;
+  cursor: pointer;
+  transition: all var(--transition-fast) !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem !important;
+}
+
+.btn-delete-course:hover {
+  background: rgba(239, 68, 68, 0.28) !important;
+  border-color: var(--danger) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-danger-action {
+  padding: 10px 20px;
+  background: rgba(239, 68, 68, 0.15) !important;
+  border: 1px solid rgba(239, 68, 68, 0.4) !important;
+  color: var(--danger) !important;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-danger-action:hover {
+  background: rgba(239, 68, 68, 0.3) !important;
+  border-color: var(--danger) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35) !important;
+  transform: translateY(-1px);
+}
+
 /* ==========================================================================
    MEJORAS UX: Modo Enfoque, Reanudar Clase y Atajos
    ========================================================================== */

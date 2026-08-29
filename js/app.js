@@ -647,6 +647,68 @@ class SkoolApp {
     this.showToast(`🎉 ¡Curso duplicado exitosamente con ${duplicatedModules.length} módulos completos!`, 'success');
   }
 
+  async deleteCourse(courseId, event = null) {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+
+    if (!this.authenticatedUser) {
+      this.showToast('🔒 Debes iniciar sesión para realizar esta acción.', 'warning');
+      return;
+    }
+
+    const course = this.state.courses.find(c => c.id === courseId);
+    if (!course) {
+      this.showToast('❌ Curso no encontrado.', 'danger');
+      return;
+    }
+
+    const isSuperAdmin = this.isUserSuperAdmin();
+    const isOwner = course.creator_id === this.authenticatedUser.id;
+
+    // Validación estricta de permisos: Solo Super Admin o el propio Creador
+    if (!isSuperAdmin && !isOwner) {
+      this.showToast('⛔ Acceso denegado: Solo el Super Admin o el creador del curso pueden eliminarlo.', 'danger');
+      return;
+    }
+
+    // Confirmación modal de seguridad
+    const confirmed = window.confirm(`¿Estás seguro de que deseas eliminar permanentemente el curso:\n"${course.title}"?\n\nEsta acción borrará todas sus lecciones y módulos. No se puede deshacer.`);
+    if (!confirmed) return;
+
+    // Eliminar del estado local
+    this.updateState(state => {
+      state.courses = state.courses.filter(c => c.id !== courseId);
+    });
+
+    // Eliminar de Supabase
+    const supabase = getSupabase();
+    if (supabase) {
+      try {
+        const { error } = await supabase.from('courses').delete().eq('id', courseId);
+        if (error) {
+          console.warn('Nota sobre eliminación en Supabase:', error.message);
+        } else {
+          console.log('✅ Curso eliminado exitosamente de la base de datos Supabase.');
+        }
+      } catch (err) {
+        console.warn('Error al eliminar curso en Supabase:', err);
+      }
+    }
+
+    // Si el curso eliminado era el que estaba activo, seleccionar otro disponible
+    if (this.selectedCourseId === courseId) {
+      if (this.state.courses.length > 0) {
+        this.selectCourse(this.state.courses[0].id);
+      } else {
+        this.clearLessonSelection();
+      }
+    }
+
+    this.showToast(`🗑️ Curso "${course.title}" eliminado exitosamente.`, 'success');
+  }
+
   // --- Header & Navigation Bar ---
   renderHeader() {
     const { currentUser } = this.state;
@@ -861,6 +923,11 @@ class SkoolApp {
                 <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; color:var(--text-muted); border-top:1px solid var(--border-color); padding-top:10px; flex-wrap:wrap; gap:8px;">
                   <span>Por: <strong>${c.creator_name || 'E-hook'}</strong></span>
                   <div style="display:flex; gap:6px; align-items:center;">
+                    ${(isOwner || this.isUserSuperAdmin()) ? `
+                      <button class="btn btn-sm btn-delete-course" onclick="window.app.deleteCourse('${c.id}', event)" title="Eliminar este curso permanentemente">
+                        🗑️ Eliminar
+                      </button>
+                    ` : ''}
                     ${this.isUserSuperAdmin() ? `
                       <button class="btn btn-sm btn-duplicate" onclick="window.app.duplicateCourse('${c.id}', event)" title="Duplicar este curso completo a la base de datos">
                         📋 Duplicar
@@ -1950,6 +2017,11 @@ class SkoolApp {
         ${this.isUserSuperAdmin() ? `
           <button class="btn-duplicate-action" onclick="window.app.duplicateCourse('${course.id}')" title="Duplicar este curso completo a la base de datos">
             <i data-lucide="copy"></i> Duplicar Curso a Base de Datos
+          </button>
+        ` : ''}
+        ${(this.isUserSuperAdmin() || (this.authenticatedUser && course.creator_id === this.authenticatedUser.id)) ? `
+          <button class="btn-danger-action" onclick="window.app.deleteCourse('${course.id}')" title="Eliminar este curso permanentemente">
+            <i data-lucide="trash-2"></i> Eliminar este Curso
           </button>
         ` : ''}
       </div>

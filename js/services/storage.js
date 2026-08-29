@@ -1,6 +1,6 @@
 import { initialData } from '../data/initialData.js';
 
-const STORAGE_KEY = 'skoolx_platform_state_v25'; // Versión 25: Límite de cursos por usuario y bloqueo antispam en evaluaciones
+const STORAGE_KEY = 'skoolx_platform_state_v26'; // Versión 26: Eliminación de cursos exclusiva para Super Admin y Creadores
 
 export function loadState() {
   try {
