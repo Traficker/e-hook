@@ -1,6 +1,6 @@
 import { initialData } from '../data/initialData.js';
 
-const STORAGE_KEY = 'skoolx_platform_state_v29'; // Versión 29: Botón destacado Cambiar Nombre del Curso en panel de administración
+const STORAGE_KEY = 'skoolx_platform_state_v30'; // Versión 30: Anti-Cache Headers para refresco automático sin Ctrl+F5
 
 export function loadState() {
   try {
