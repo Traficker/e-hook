@@ -682,15 +682,19 @@ class SkoolApp {
       state.courses = state.courses.filter(c => c.id !== courseId);
     });
 
-    // Eliminar de Supabase
+    // Eliminar de Supabase (courses y progresos asociados)
     const supabase = getSupabase();
     if (supabase) {
       try {
+        // 1. Borrar progresos asociados a este curso en Supabase
+        await supabase.from('student_progress').delete().eq('course_id', courseId);
+
+        // 2. Borrar el curso de la tabla courses en Supabase
         const { error } = await supabase.from('courses').delete().eq('id', courseId);
         if (error) {
           console.warn('Nota sobre eliminación en Supabase:', error.message);
         } else {
-          console.log('✅ Curso eliminado exitosamente de la base de datos Supabase.');
+          console.log(`✅ Curso "${course.title}" (${courseId}) eliminado exitosamente de la base de datos Supabase.`);
         }
       } catch (err) {
         console.warn('Error al eliminar curso en Supabase:', err);
