@@ -73,6 +73,9 @@ class SkoolApp {
     if (!supabase) return;
 
     try {
+      // Cargar cursos públicos de Supabase siempre (visitante o autenticado)
+      await this.loadCoursesFromSupabase();
+
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         this.authenticatedUser = await this.fetchUserProfile(session.user);
@@ -88,6 +91,7 @@ class SkoolApp {
           await this.loadCoursesFromSupabase();
         } else {
           this.authenticatedUser = null;
+          await this.loadCoursesFromSupabase();
         }
         this.render();
       });
@@ -537,25 +541,29 @@ class SkoolApp {
       const { data, error } = await supabase.from('courses').select('*');
       if (!error && data && data.length > 0) {
         this.updateState(state => {
-          data.forEach(cloudCourse => {
-            const existingIdx = state.courses.findIndex(c => c.id === cloudCourse.id);
-            const formattedCourse = {
-              id: cloudCourse.id,
-              title: cloudCourse.title,
-              subtitle: cloudCourse.subtitle || cloudCourse.description || '',
-              badge: cloudCourse.badge || 'Oficial & Completo',
-              coverUrl: cloudCourse.cover_url || cloudCourse.coverUrl || 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1000&q=80',
-              creator_id: cloudCourse.creator_id,
-              creator_name: cloudCourse.creator_name || 'Super Admin',
-              modules: cloudCourse.modules || []
-            };
-            if (existingIdx > -1) {
-              state.courses[existingIdx] = formattedCourse;
-            } else {
-              state.courses.push(formattedCourse);
-            }
-          });
+          state.courses = data.map(cloudCourse => ({
+            id: cloudCourse.id,
+            title: cloudCourse.title,
+            subtitle: cloudCourse.subtitle || cloudCourse.description || '',
+            badge: cloudCourse.badge || 'Oficial & Completo',
+            coverUrl: cloudCourse.cover_url || cloudCourse.coverUrl || 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1000&q=80',
+            creator_id: cloudCourse.creator_id,
+            creator_name: cloudCourse.creator_name || 'Super Admin',
+            modules: cloudCourse.modules || []
+          }));
         });
+
+        // Asegurar que haya un curso seleccionado válido
+        if (this.state.courses.length > 0) {
+          if (!this.state.courses.some(c => c.id === this.selectedCourseId)) {
+            const firstCourse = this.state.courses[0];
+            this.selectedCourseId = firstCourse.id;
+            if (firstCourse.modules && firstCourse.modules.length > 0) {
+              this.selectedModuleId = firstCourse.modules[0].id;
+              this.selectedLessonId = firstCourse.modules[0].lessons[0]?.id || null;
+            }
+          }
+        }
       }
     } catch (e) {
       console.warn('loadCoursesFromSupabase:', e);

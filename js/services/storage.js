@@ -1,6 +1,6 @@
 import { initialData } from '../data/initialData.js';
 
-const STORAGE_KEY = 'skoolx_platform_state_v26'; // Versión 26: Eliminación de cursos exclusiva para Super Admin y Creadores
+const STORAGE_KEY = 'skoolx_platform_state_v27'; // Versión 27: Cursos 100% dinámicos en Supabase sin datos estáticos en código fuente
 
 export function loadState() {
   try {
