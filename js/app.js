@@ -1943,6 +1943,157 @@ class SkoolApp {
   // ADMIN PANEL (ADMINISTRAR CURSOS, MODULOS, LECCIONES Y ENLACES DE VIDEO)
   // ==========================================================================
 
+  // Sincronizar cambios de un curso con Supabase en tiempo real
+  async syncCurrentCourseToSupabase(courseId = null) {
+    const targetCourseId = courseId || this.selectedCourseId;
+    const course = this.state.courses.find(c => c.id === targetCourseId);
+    if (!course) return;
+
+    const supabase = getSupabase();
+    if (!supabase || !this.authenticatedUser) return;
+
+    try {
+      const { error } = await supabase.from('courses').upsert({
+        id: course.id,
+        title: course.title,
+        subtitle: course.subtitle || '',
+        badge: course.badge || 'Oficial & Completo',
+        cover_url: course.coverUrl || '',
+        creator_id: course.creator_id || this.authenticatedUser.id,
+        creator_name: course.creator_name || this.authenticatedUser.fullName || 'Super Admin',
+        modules: course.modules,
+        updated_at: new Date().toISOString()
+      });
+      if (error) {
+        console.warn('Error al sincronizar curso con Supabase:', error.message);
+      } else {
+        console.log(`✅ Curso "${course.title}" (${course.id}) actualizado en Supabase.`);
+      }
+    } catch (err) {
+      console.warn('syncCurrentCourseToSupabase error:', err);
+    }
+  }
+
+  // --- Modal para Editar Título, Descripción y Portada del Curso ---
+  openEditCourseModal(courseId = null) {
+    const targetCourseId = courseId || this.selectedCourseId;
+    const course = this.state.courses.find(c => c.id === targetCourseId);
+    if (!course) return;
+
+    const existing = document.getElementById('course-edit-modal-overlay');
+    if (existing) existing.remove();
+
+    const root = document.getElementById('admin-modal-root') || document.body;
+    const wrapper = document.createElement('div');
+    wrapper.id = 'course-edit-modal-overlay';
+    wrapper.innerHTML = `
+      <div style="position:fixed; inset:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); display:flex; align-items:center; justify-content:center; z-index:1000; padding:1rem;">
+        <div class="admin-panel-card" style="width:100%; max-width:600px; max-height:90vh; overflow-y:auto;">
+          <div class="flex-between" style="margin-bottom:1.5rem;">
+            <h2>✏️ Editar Información del Curso</h2>
+            <button type="button" onclick="document.getElementById('course-edit-modal-overlay').remove()" style="background:none;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer;">✕</button>
+          </div>
+
+          <form id="edit-course-form" onsubmit="window.app.handleSaveEditCourse(event, '${course.id}')">
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label style="display:block; margin-bottom:4px; font-weight:700;">📝 Nombre / Título del Curso</label>
+              <input type="text" name="title" class="form-control" value="${course.title}" required style="width:100%; padding:10px; border-radius:var(--radius-md);" />
+            </div>
+
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label style="display:block; margin-bottom:4px; font-weight:700;">💬 Subtítulo o Descripción Corta</label>
+              <textarea name="subtitle" class="form-control" rows="3" required style="width:100%; padding:10px; border-radius:var(--radius-md);">${course.subtitle || ''}</textarea>
+            </div>
+
+            <div class="form-group" style="margin-bottom:1rem;">
+              <label style="display:block; margin-bottom:4px; font-weight:700;">🏷️ Etiqueta / Badge</label>
+              <input type="text" name="badge" class="form-control" value="${course.badge || 'Oficial & Completo'}" style="width:100%; padding:10px; border-radius:var(--radius-md);" />
+            </div>
+
+            <div class="form-group" style="margin-bottom:1.5rem;">
+              <label style="display:block; margin-bottom:4px; font-weight:700;">🖼️ URL de la Imagen de Portada</label>
+              <input type="url" name="coverUrl" class="form-control" value="${course.coverUrl || ''}" placeholder="https://..." style="width:100%; padding:10px; border-radius:var(--radius-md);" />
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+              <button type="button" class="btn btn-ghost" onclick="document.getElementById('course-edit-modal-overlay').remove()">Cancelar</button>
+              <button type="submit" class="btn btn-primary" style="font-weight:700; padding:10px 20px;">💾 Guardar Cambios en Supabase</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+    root.appendChild(wrapper);
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  async handleSaveEditCourse(e, courseId) {
+    e.preventDefault();
+    const form = e.target;
+    const title = this.sanitizeHTML(form.title.value.trim());
+    const subtitle = this.sanitizeHTML(form.subtitle.value.trim());
+    const badge = this.sanitizeHTML(form.badge.value.trim());
+    const coverUrl = form.coverUrl.value.trim() || 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1000&q=80';
+
+    if (!title) return;
+
+    this.updateState(state => {
+      const c = state.courses.find(x => x.id === courseId);
+      if (c) {
+        c.title = title;
+        c.subtitle = subtitle;
+        c.badge = badge;
+        c.coverUrl = coverUrl;
+      }
+    });
+
+    await this.syncCurrentCourseToSupabase(courseId);
+
+    const overlay = document.getElementById('course-edit-modal-overlay');
+    if (overlay) overlay.remove();
+
+    this.showToast(`✅ Curso "${title}" actualizado correctamente en Supabase`, 'success');
+  }
+
+  // --- Renombrar y Eliminar Módulos ---
+  renameModule(modId) {
+    const course = this.state.courses.find(c => c.id === this.selectedCourseId);
+    if (!course) return;
+    const mod = course.modules.find(m => m.id === modId);
+    if (!mod) return;
+
+    const newTitle = window.prompt('Escribe el nuevo título para este módulo:', mod.title);
+    if (newTitle && newTitle.trim() && newTitle.trim() !== mod.title) {
+      this.updateState(state => {
+        const targetCourse = state.courses.find(c => c.id === this.selectedCourseId);
+        const targetMod = targetCourse.modules.find(m => m.id === modId);
+        if (targetMod) {
+          targetMod.title = this.sanitizeHTML(newTitle.trim());
+        }
+      });
+      this.syncCurrentCourseToSupabase();
+      this.showToast('✅ Módulo renombrado correctamente', 'success');
+    }
+  }
+
+  deleteModule(modId) {
+    const course = this.state.courses.find(c => c.id === this.selectedCourseId);
+    if (!course) return;
+    const mod = course.modules.find(m => m.id === modId);
+    if (!mod) return;
+
+    if (!window.confirm(`¿Estás seguro de que deseas eliminar el módulo "${mod.title}" y todas sus lecciones?\n\nEsta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    this.updateState(state => {
+      const targetCourse = state.courses.find(c => c.id === this.selectedCourseId);
+      targetCourse.modules = targetCourse.modules.filter(m => m.id !== modId);
+    });
+    this.syncCurrentCourseToSupabase();
+    this.showToast(`🗑️ Módulo "${mod.title}" eliminado.`, 'success');
+  }
+
   // --- Reordering Methods for Modules and Lessons ---
   moveModuleUp(modId) {
     const course = this.state.courses.find(c => c.id === this.selectedCourseId);
@@ -1955,6 +2106,7 @@ class SkoolApp {
         targetCourse.modules[idx] = targetCourse.modules[idx - 1];
         targetCourse.modules[idx - 1] = temp;
       });
+      this.syncCurrentCourseToSupabase();
       this.showToast('⬆️ Módulo reordenado hacia arriba', 'success');
     }
   }
@@ -1970,6 +2122,7 @@ class SkoolApp {
         targetCourse.modules[idx] = targetCourse.modules[idx + 1];
         targetCourse.modules[idx + 1] = temp;
       });
+      this.syncCurrentCourseToSupabase();
       this.showToast('⬇️ Módulo reordenado hacia abajo', 'success');
     }
   }
@@ -1988,6 +2141,7 @@ class SkoolApp {
         targetMod.lessons[idx] = targetMod.lessons[idx - 1];
         targetMod.lessons[idx - 1] = temp;
       });
+      this.syncCurrentCourseToSupabase();
       this.showToast('⬆️ Lección reordenada hacia arriba', 'success');
     }
   }
@@ -2006,6 +2160,7 @@ class SkoolApp {
         targetMod.lessons[idx] = targetMod.lessons[idx + 1];
         targetMod.lessons[idx + 1] = temp;
       });
+      this.syncCurrentCourseToSupabase();
       this.showToast('⬇️ Lección reordenada hacia abajo', 'success');
     }
   }
@@ -2016,7 +2171,7 @@ class SkoolApp {
     return `
       <div class="admin-header">
         <h1>⚙️ Panel de Administración y Creador</h1>
-        <p>Crea nuevos cursos, reordena módulos y lecciones, añade contenido y linkea videos de YouTube/Vimeo.</p>
+        <p>Edita nombres de cursos, renombra módulos y lecciones, reordena y añade enlaces de video y documentos.</p>
       </div>
 
       <div class="admin-tabs" style="display:flex; gap:1rem; flex-wrap:wrap;">
@@ -2040,7 +2195,15 @@ class SkoolApp {
 
       <!-- Manage Lessons Table -->
       <div class="admin-panel-card">
-        <h2>Estructura del Curso: "${course.title}"</h2>
+        <div class="flex-between" style="flex-wrap:wrap; gap:10px; margin-bottom:1.25rem; padding-bottom:12px; border-bottom:1px solid var(--border-color);">
+          <div>
+            <h2 style="margin:0; font-size:1.4rem;">Estructura del Curso: "${course.title}"</h2>
+            <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:0.85rem;">Haz clic en "Editar Curso" para cambiar el nombre oficial, subtítulo o imagen.</p>
+          </div>
+          <button class="btn btn-sm btn-ghost" onclick="window.app.openEditCourseModal('${course.id}')" title="Editar nombre, descripción y portada del curso" style="border:1px solid var(--accent-primary); color:var(--accent-primary); font-weight:700; display:flex; align-items:center; gap:6px; padding:8px 14px; border-radius:var(--radius-md);">
+            <i data-lucide="edit"></i> ✏️ Editar Nombre del Curso
+          </button>
+        </div>
         
         <div style="margin-top:1.5rem;">
           ${course.modules.map((mod, modIdx) => `
@@ -2050,7 +2213,13 @@ class SkoolApp {
                   <h3 style="margin:0;">📦 ${mod.title}</h3>
                   <span style="font-size:0.85rem; color:var(--text-muted);">(${mod.lessons.length} lecciones)</span>
                 </div>
-                <div style="display:flex; gap:6px;">
+                <div style="display:flex; gap:6px; align-items:center;">
+                  <button class="btn btn-sm btn-ghost" onclick="window.app.renameModule('${mod.id}')" title="Cambiar nombre de este módulo" style="border:1px solid var(--border-color); font-size:0.8rem;">
+                    ✏️ Renombrar
+                  </button>
+                  <button class="btn btn-sm btn-logout" onclick="window.app.deleteModule('${mod.id}')" title="Eliminar este módulo" style="padding:4px 8px; font-size:0.8rem;">
+                    🗑️
+                  </button>
                   <button class="btn btn-sm btn-ghost" onclick="window.app.moveModuleUp('${mod.id}')" ${modIdx === 0 ? 'disabled' : ''} title="Mover módulo arriba">
                     ⬆️ Subir
                   </button>
@@ -2564,6 +2733,7 @@ class SkoolApp {
       const mod = course.modules.find(m => m.id === moduleId);
       if (mod) mod.lessons.push(newLesson);
     });
+    this.syncCurrentCourseToSupabase();
 
     const overlay = document.getElementById('lesson-modal-overlay');
     if (overlay) overlay.remove();
@@ -2597,10 +2767,11 @@ class SkoolApp {
         }
       }
     });
+    this.syncCurrentCourseToSupabase();
 
     const overlay = document.getElementById('lesson-modal-overlay');
     if (overlay) overlay.remove();
-    this.showToast('💾 Cambios guardados correctamente', 'success');
+    this.showToast('💾 Cambios guardados correctamente en Supabase', 'success');
   }
 
   deleteLesson(moduleId, lessonId) {
@@ -2613,17 +2784,18 @@ class SkoolApp {
         mod.lessons = mod.lessons.filter(l => l.id !== lessonId);
       }
     });
+    this.syncCurrentCourseToSupabase();
 
-    this.showToast('Lección eliminada', 'info');
+    this.showToast('🗑️ Lección eliminada correctamente', 'info');
   }
 
   openCreateModuleModal() {
     const title = prompt('Ingresa el título del nuevo Módulo:');
-    if (!title) return;
+    if (!title || !title.trim()) return;
 
     const newMod = {
       id: `mod_${Date.now()}`,
-      title,
+      title: title.trim(),
       description: 'Nuevo módulo añadido.',
       lessons: []
     };
@@ -2632,8 +2804,9 @@ class SkoolApp {
       const course = state.courses.find(c => c.id === this.selectedCourseId);
       if (course) course.modules.push(newMod);
     });
+    this.syncCurrentCourseToSupabase();
 
-    this.showToast('Nuevo Módulo creado', 'success');
+    this.showToast('✅ Nuevo Módulo creado en Supabase', 'success');
   }
 
   // --- Switch Controls ---

@@ -1,6 +1,6 @@
 import { initialData } from '../data/initialData.js';
 
-const STORAGE_KEY = 'skoolx_platform_state_v27'; // Versión 27: Cursos 100% dinámicos en Supabase sin datos estáticos en código fuente
+const STORAGE_KEY = 'skoolx_platform_state_v28'; // Versión 28: Edición completa de títulos de cursos, renombrado de módulos y sincronización en tiempo real a Supabase
 
 export function loadState() {
   try {
