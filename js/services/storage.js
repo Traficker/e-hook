@@ -1,6 +1,6 @@
 import { initialData } from '../data/initialData.js';
 
-const STORAGE_KEY = 'skoolx_platform_state_v28'; // Versión 28: Edición completa de títulos de cursos, renombrado de módulos y sincronización en tiempo real a Supabase
+const STORAGE_KEY = 'skoolx_platform_state_v29'; // Versión 29: Botón destacado Cambiar Nombre del Curso en panel de administración
 
 export function loadState() {
   try {

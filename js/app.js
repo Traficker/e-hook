@@ -2175,7 +2175,10 @@ class SkoolApp {
       </div>
 
       <div class="admin-tabs" style="display:flex; gap:1rem; flex-wrap:wrap;">
-        <button class="btn-primary-action" onclick="window.app.openCreateLessonModal()">
+        <button class="btn-primary-action" onclick="window.app.openEditCourseModal('${course.id}')" style="background:linear-gradient(135deg, #6366f1, #4f46e5); font-weight:700;">
+          <i data-lucide="edit-3"></i> ✏️ Cambiar Nombre del Curso
+        </button>
+        <button class="btn-nav-step" onclick="window.app.openCreateLessonModal()">
           <i data-lucide="plus-circle"></i> Añadir Nueva Lección con Video
         </button>
         <button class="btn-nav-step" onclick="window.app.openCreateModuleModal()">
