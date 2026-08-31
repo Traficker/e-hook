@@ -14,16 +14,18 @@ export class NewsService {
         const { data, error } = await supabase
           .from('news_posts')
           .select('*')
+          .order('order_index', { ascending: true, nullsFirst: false })
           .order('is_pinned', { ascending: false })
           .order('created_at', { ascending: false });
 
         if (!error && Array.isArray(data)) {
-          const mapped = data.map(n => ({
+          const mapped = data.map((n, idx) => ({
             id: n.id,
             title: n.title,
             category: n.category,
             date: n.date,
             isPinned: !!n.is_pinned,
+            orderIndex: (n.order_index !== undefined && n.order_index !== null) ? Number(n.order_index) : idx,
             author: n.author,
             avatar: n.avatar,
             videoUrl: n.video_url || '',
@@ -57,7 +59,7 @@ export class NewsService {
       title: newsData.title.trim(),
       category: newsData.category || '📢 Anuncio Oficial',
       date: today,
-      isPinned: !!newsData.isPinned,
+      orderIndex: 0,
       author: authorName,
       avatar: authorAvatar,
       videoUrl: newsData.videoUrl?.trim() || '',
@@ -76,6 +78,7 @@ export class NewsService {
             category: newNews.category,
             date: newNews.date,
             is_pinned: newNews.isPinned,
+            order_index: 0,
             author: newNews.author,
             avatar: newNews.avatar,
             video_url: newNews.videoUrl,
@@ -94,9 +97,38 @@ export class NewsService {
     }
 
     const current = this.loadLocalCache();
-    const updated = [newNews, ...current];
+    const updated = [newNews, ...current.map((n, idx) => ({ ...n, orderIndex: idx + 1 }))];
     this.saveLocalCache(updated);
     return newNews;
+  }
+
+  /**
+   * Reordena la lista de noticias y guarda la nueva secuencia en Supabase y localmente
+   */
+  static async reorderNews(orderedNewsList) {
+    const updated = orderedNewsList.map((item, index) => ({
+      ...item,
+      orderIndex: index
+    }));
+
+    this.saveLocalCache(updated);
+
+    if (isSupabaseReady()) {
+      try {
+        const supabase = getSupabase();
+        const updates = updated.map(item =>
+          supabase
+            .from('news_posts')
+            .update({ order_index: item.orderIndex })
+            .eq('id', item.id)
+        );
+        await Promise.allSettled(updates);
+      } catch (err) {
+        console.warn('⚠️ Error al guardar reordenación de noticias en Supabase:', err);
+      }
+    }
+
+    return updated;
   }
 
   /**

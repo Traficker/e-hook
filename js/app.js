@@ -1494,9 +1494,14 @@ class SkoolApp {
       }
     }
 
-    const isAdmin = this.isUserAdmin();
-    // Sort: Pinned posts first
-    const sortedPosts = [...posts].sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0));
+    const isSuperAdmin = this.isUserSuperAdmin();
+    // Orden personalizado: Respetar la secuencia manual definida por el Super Admin
+    const sortedPosts = [...posts].sort((a, b) => {
+      if (a.orderIndex !== undefined && b.orderIndex !== undefined) {
+        return a.orderIndex - b.orderIndex;
+      }
+      return (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0);
+    });
 
     return `
       <div class="news-layout">
@@ -1508,7 +1513,7 @@ class SkoolApp {
               <h1 style="font-size:1.8rem; margin:6px 0;">Noticias & Anuncios de los Cursos</h1>
               <p style="color:var(--text-muted); font-size:0.95rem;">Mantente al día con los últimos avisos, actualizaciones de lecciones y novedades de la plataforma.</p>
             </div>
-            ${isAdmin ? `
+            ${isSuperAdmin ? `
               <button class="btn-primary-action" onclick="window.app.openCreateNewsModal()" style="padding:12px 20px; font-size:0.95rem; white-space:nowrap; box-shadow:0 4px 14px rgba(99,102,241,0.35);">
                 ➕ Publicar Nueva Noticia
               </button>
@@ -1522,9 +1527,9 @@ class SkoolApp {
             <div class="admin-panel-card" style="text-align:center; padding:3rem; grid-column: 1 / -1;">
               <div style="font-size:2.5rem; margin-bottom:1rem;">📰</div>
               <h3>No hay noticias publicadas aún</h3>
-              <p style="color:var(--text-muted);">El administrador publicará noticias y avisos pronto.</p>
+              <p style="color:var(--text-muted);">El Super Admin publicará noticias y avisos pronto.</p>
             </div>
-          ` : sortedPosts.map(news => {
+          ` : sortedPosts.map((news, index) => {
             const mediaUrl = news.videoUrl || (news.coverUrl && (news.coverUrl.includes('instagram.com') || news.coverUrl.includes('instagr.am') || news.coverUrl.includes('tiktok.com') || news.coverUrl.includes('youtube.com') || news.coverUrl.includes('drive.google.com')) ? news.coverUrl : null);
             const parsedVideo = mediaUrl ? (window._parseVideoUrl || (() => null))(mediaUrl) : null;
             const sanitizedTitle = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(news.title) : news.title;
@@ -1572,15 +1577,21 @@ class SkoolApp {
                     </button>
                   </div>
 
-                  ${isAdmin ? `
-                    <div class="admin-controls-strip" style="margin-top:12px;">
-                      <button class="btn-nav-step" style="padding:6px 12px; font-size:0.8rem;" onclick="window.app.togglePinNews('${news.id}')">
+                  ${isSuperAdmin ? `
+                    <div class="admin-controls-strip" style="margin-top:12px; display:flex; flex-wrap:wrap; gap:6px;">
+                      <button class="btn-nav-step" style="padding:5px 9px; font-size:0.78rem; font-weight:700;" onclick="window.app.moveNewsUp(${index})" ${index === 0 ? 'disabled style="opacity:0.35; cursor:not-allowed;"' : ''} title="Mover hacia arriba">
+                        ⬆️ Subir
+                      </button>
+                      <button class="btn-nav-step" style="padding:5px 9px; font-size:0.78rem; font-weight:700;" onclick="window.app.moveNewsDown(${index})" ${index === sortedPosts.length - 1 ? 'disabled style="opacity:0.35; cursor:not-allowed;"' : ''} title="Mover hacia abajo">
+                        ⬇️ Bajar
+                      </button>
+                      <button class="btn-nav-step" style="padding:5px 9px; font-size:0.78rem;" onclick="window.app.togglePinNews('${news.id}')">
                         ${news.isPinned ? 'Desfijar' : '📌 Fijar'}
                       </button>
-                      <button class="btn-nav-step" style="padding:6px 12px; font-size:0.8rem;" onclick="window.app.openEditNewsModal('${news.id}')">
+                      <button class="btn-nav-step" style="padding:5px 9px; font-size:0.78rem;" onclick="window.app.openEditNewsModal('${news.id}')">
                         ✏️ Editar
                       </button>
-                      <button class="btn-nav-step" style="padding:6px 12px; font-size:0.8rem; border-color:var(--error); color:var(--error);" onclick="window.app.deleteNewsPost('${news.id}')">
+                      <button class="btn-nav-step" style="padding:5px 9px; font-size:0.78rem; border-color:var(--error); color:var(--error);" onclick="window.app.deleteNewsPost('${news.id}')">
                         🗑️ Borrar
                       </button>
                     </div>
@@ -1595,7 +1606,7 @@ class SkoolApp {
   }
 
   renderNewsArticleViewer(news) {
-    const isAdmin = this.isUserAdmin();
+    const isSuperAdmin = this.isUserSuperAdmin();
     const mediaUrl = news.videoUrl || (news.coverUrl && (news.coverUrl.includes('instagram.com') || news.coverUrl.includes('instagr.am') || news.coverUrl.includes('tiktok.com') || news.coverUrl.includes('youtube.com') || news.coverUrl.includes('drive.google.com')) ? news.coverUrl : null);
     const parsedVideo = mediaUrl ? (window._parseVideoUrl || (() => null))(mediaUrl) : null;
     const sanitizedTitle = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(news.title) : news.title;
@@ -1650,7 +1661,7 @@ class SkoolApp {
             ${sanitizedContent}
           </div>
 
-          ${isAdmin ? `
+          ${isSuperAdmin ? `
             <div style="display:flex; gap:10px; margin-top:2.5rem; padding-top:1.5rem; border-top:1px solid var(--border-color); justify-content:flex-end; flex-wrap:wrap;">
               <button class="btn-nav-step" style="padding:8px 16px;" onclick="window.app.togglePinNews('${news.id}')">
                 ${news.isPinned ? 'Desfijar' : '📌 Fijar Noticia'}
@@ -1668,12 +1679,44 @@ class SkoolApp {
     `;
   }
 
-  // --- News Modal Controls ---
+  // --- News Modal Controls & Super Admin Actions ---
+  async moveNewsUp(index) {
+    if (!this.isUserSuperAdmin() || index <= 0) return;
+    const posts = [...((this.newsPosts && this.newsPosts.length > 0) ? this.newsPosts : [])];
+    if (index >= posts.length) return;
+    const temp = posts[index];
+    posts[index] = posts[index - 1];
+    posts[index - 1] = temp;
+    this.newsPosts = await NewsService.reorderNews(posts);
+    this.showToast('⬆️ Noticia movida hacia arriba', 'info');
+    this.render();
+  }
+
+  async moveNewsDown(index) {
+    if (!this.isUserSuperAdmin()) return;
+    const posts = [...((this.newsPosts && this.newsPosts.length > 0) ? this.newsPosts : [])];
+    if (index < 0 || index >= posts.length - 1) return;
+    const temp = posts[index];
+    posts[index] = posts[index + 1];
+    posts[index + 1] = temp;
+    this.newsPosts = await NewsService.reorderNews(posts);
+    this.showToast('⬇️ Noticia movida hacia abajo', 'info');
+    this.render();
+  }
+
   openCreateNewsModal() {
+    if (!this.isUserSuperAdmin()) {
+      this.showToast('⛔ Solo el Super Admin puede publicar noticias', 'error');
+      return;
+    }
     this._showNewsModalHTML(null);
   }
 
   openEditNewsModal(newsId) {
+    if (!this.isUserSuperAdmin()) {
+      this.showToast('⛔ Solo el Super Admin puede editar noticias', 'error');
+      return;
+    }
     const posts = (this.newsPosts && this.newsPosts.length > 0) ? this.newsPosts : (this.state.newsPosts || []);
     const target = posts.find(n => n.id === newsId);
     if (!target) return;
@@ -1692,7 +1735,7 @@ class SkoolApp {
       <div class="modal-overlay" style="display:flex; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); backdrop-filter:blur(6px); align-items:center; justify-content:center; z-index:9999; padding:20px;">
         <div class="modal-card" style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-lg); width:100%; max-width:620px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 40px rgba(0,0,0,0.5); padding:24px;">
           <div class="flex-between" style="margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:12px;">
-            <h2 style="font-size:1.25rem; font-weight:800; color:var(--text-main); margin:0;">${isEdit ? '✏️ Editar Noticia' : '📢 Publicar Noticia o Aviso'}</h2>
+            <h2 style="font-size:1.25rem; font-weight:800; color:var(--text-main); margin:0;">${isEdit ? '✏️ Editar Noticia (Super Admin)' : '📢 Publicar Noticia o Aviso (Super Admin)'}</h2>
             <button class="btn-close" onclick="document.getElementById('news-modal-overlay').remove()" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;">✕</button>
           </div>
 
@@ -1730,7 +1773,7 @@ class SkoolApp {
 
             <div class="form-group" style="display:flex; align-items:center; gap:8px; margin-bottom:20px;">
               <input type="checkbox" name="isPinned" id="news-pinned-check" ${news?.isPinned ? 'checked' : ''} style="width:18px; height:18px; cursor:pointer;" />
-              <label for="news-pinned-check" style="margin-bottom:0; cursor:pointer; font-weight:600; font-size:0.88rem;">📌 Fijar esta noticia al inicio de la página</label>
+              <label for="news-pinned-check" style="margin-bottom:0; cursor:pointer; font-weight:600; font-size:0.88rem;">📌 Fijar esta noticia</label>
             </div>
 
             <div class="flex-between" style="display:flex; justify-content:flex-end; gap:10px; border-top:1px solid var(--border-color); padding-top:16px;">
@@ -1749,6 +1792,10 @@ class SkoolApp {
 
   async handleSaveNews(e, newsId) {
     e.preventDefault();
+    if (!this.isUserSuperAdmin()) {
+      this.showToast('⛔ Solo el Super Admin puede guardar noticias', 'error');
+      return;
+    }
     const formData = new FormData(e.target);
     const title = formData.get('title')?.trim() || '';
     const category = formData.get('category');
@@ -1790,6 +1837,10 @@ class SkoolApp {
   }
 
   async togglePinNews(newsId) {
+    if (!this.isUserSuperAdmin()) {
+      this.showToast('⛔ Solo el Super Admin puede fijar noticias', 'error');
+      return;
+    }
     await NewsService.togglePin(newsId);
     this.newsPosts = await NewsService.fetchNews();
     this.showToast('📌 Estado de la noticia actualizado', 'info');
@@ -1797,6 +1848,10 @@ class SkoolApp {
   }
 
   async deleteNewsPost(newsId) {
+    if (!this.isUserSuperAdmin()) {
+      this.showToast('⛔ Solo el Super Admin puede eliminar noticias', 'error');
+      return;
+    }
     if (!confirm('¿Seguro que deseas eliminar esta noticia? Esta acción no se puede deshacer.')) return;
     await NewsService.deleteNews(newsId);
     if (this.selectedNewsArticleId === newsId) {
