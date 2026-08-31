@@ -152,12 +152,12 @@ export function renderVideoContainer(videoUrl, title = 'Contenido Multimedia') {
 
   if (parsed.type === 'instagram') {
     return `
-      <div class="video-player-wrapper instagram-media-wrapper" style="max-width:500px; margin:0 auto; border-radius:var(--radius-lg); overflow:hidden; background:#000; box-shadow:0 12px 35px rgba(0,0,0,0.6);">
-        <div style="position:relative; width:100%; min-height:580px; height:600px; background:#000;">
+      <div class="video-player-wrapper instagram-clean-wrapper" style="max-width:480px; margin:0 auto; border-radius:var(--radius-lg); overflow:hidden; background:#000; box-shadow:0 12px 35px rgba(0,0,0,0.6);">
+        <div class="instagram-frame-clipper" style="position:relative; width:100%; height:490px; overflow:hidden; background:#000;">
           <iframe
             src="${parsed.embedUrl}"
             title="${title}"
-            style="width:100%; height:100%; min-height:580px; border:none; display:block;"
+            style="position:absolute; top:0; left:0; width:100%; height:580px; border:none; display:block;"
             frameborder="0"
             scrolling="no"
             allowtransparency="true"
@@ -172,7 +172,7 @@ export function renderVideoContainer(videoUrl, title = 'Contenido Multimedia') {
             </svg>
             ${platformName}
           </span>
-          <span class="video-note">🔒 Incrustado oficial interactivo</span>
+          <span class="video-note">🔒 Reproducción integrada en SkoolX</span>
         </div>
       </div>
     `;

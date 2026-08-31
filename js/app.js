@@ -1533,8 +1533,8 @@ class SkoolApp {
             return `
               <article class="news-card ${news.isPinned ? 'pinned' : ''}">
                 ${parsedVideo && parsedVideo.embedUrl ? `
-                  <div style="position:relative; width:100%; ${parsedVideo.type === 'instagram' ? 'min-height:560px; height:580px;' : (parsedVideo.isVertical ? 'height:480px;' : 'padding-bottom:56.25%;')} background:#000; overflow:hidden;">
-                    <iframe src="${parsedVideo.embedUrl}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowtransparency="true" scrolling="${parsedVideo.type === 'instagram' ? 'no' : 'auto'}" allowfullscreen loading="lazy"></iframe>
+                  <div style="position:relative; width:100%; ${parsedVideo.type === 'instagram' ? 'height:490px;' : (parsedVideo.isVertical ? 'height:480px;' : 'padding-bottom:56.25%;')} background:#000; overflow:hidden;">
+                    <iframe src="${parsedVideo.embedUrl}" style="position:absolute;top:0;left:0;width:100%;${parsedVideo.type === 'instagram' ? 'height:580px;' : 'height:100%;'}border:none;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowtransparency="true" scrolling="no" allowfullscreen loading="lazy"></iframe>
                   </div>
                 ` : (news.coverUrl && !news.coverUrl.includes('instagram.com') && !news.coverUrl.includes('instagr.am') ? `
                   <div class="news-cover-wrapper" onclick="window.app.selectNewsArticle('${news.id}')" style="cursor:pointer;">
