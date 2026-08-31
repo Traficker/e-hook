@@ -1890,13 +1890,36 @@ button, input, select, textarea {
    ========================================================================== */
 
 /* 1. Modo Enfoque (Focus / Theater Mode) */
+.lesson-layout.focus-mode {
+  display: block !important;
+  grid-template-columns: 1fr !important;
+  max-width: 1100px !important;
+  margin: 0 auto !important;
+  width: 100% !important;
+}
+
 .lesson-layout.focus-mode .modules-sidebar {
   display: none !important;
 }
 
 .lesson-layout.focus-mode .lesson-main-display {
-  max-width: 100% !important;
   width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 auto !important;
+  padding: 2.25rem 2.5rem !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45) !important;
+  border-color: rgba(99, 102, 241, 0.25) !important;
+}
+
+.lesson-layout.focus-mode .lesson-main-title {
+  font-size: 2.1rem !important;
+}
+
+.lesson-layout.focus-mode .video-player-wrapper:not(.vertical-media-wrapper) {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+  margin-bottom: 2rem !important;
 }
 
 .btn-focus-mode {

@@ -1323,6 +1323,7 @@ class SkoolApp {
   toggleFocusMode() {
     this.isFocusMode = !this.isFocusMode;
     this.render();
+    this.showToast(this.isFocusMode ? '🔍 Modo Enfoque activado (Barra lateral oculta)' : '📖 Modo normal activado', 'info');
   }
 
   // --- Lesson Navigation Methods ---
