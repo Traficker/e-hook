@@ -2391,17 +2391,216 @@ button, input, select, textarea {
   display: inline-block;
 }
 
+/* ==========================================================================
+   GLOBAL RESPONSIVE DESIGN SYSTEM (Mobile First & Tablet Optimized)
+   ========================================================================== */
+
+/* 1. Header & Navigation Responsiveness */
+@media (max-width: 1024px) {
+  .header-navbar {
+    height: auto;
+    min-height: 64px;
+    padding: 0.75rem 1.25rem;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .header-search-container {
+    order: 3;
+    width: 100%;
+    max-width: 100%;
+    margin: 6px 0 0 0;
+  }
+
+  .nav-tabs {
+    order: 4;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 4px;
+    gap: 6px;
+    display: flex;
+    flex-wrap: nowrap;
+  }
+
+  .nav-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab-btn {
+    white-space: nowrap;
+    font-size: 0.86rem;
+    padding: 7px 14px;
+    flex-shrink: 0;
+  }
+
+  .nav-right {
+    margin-left: auto;
+    gap: 8px;
+  }
+
+  .main-content {
+    padding: 1.5rem 1.25rem;
+  }
+}
+
 @media (max-width: 768px) {
+  .header-navbar {
+    padding: 0.6rem 0.85rem;
+  }
+
+  .brand-logo {
+    width: 34px;
+    height: 34px;
+    font-size: 1.1rem;
+  }
+
+  .brand-title {
+    font-size: 1.2rem;
+  }
+
+  .main-content {
+    padding: 1rem 0.75rem;
+  }
+
+  .header-progress-box {
+    min-width: 90px !important;
+    padding: 3px 6px !important;
+  }
+
+  .user-xp-badge {
+    padding: 4px 8px !important;
+    font-size: 0.75rem !important;
+  }
+
+  .user-xp-badge .xp-amount {
+    display: none;
+  }
+
+  /* Classroom & Course Grid */
+  .courses-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem !important;
+  }
+
+  .course-hero-banner {
+    padding: 1.25rem !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+
+  /* Lesson Viewer Mobile */
+  .lesson-layout {
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem !important;
+  }
+
+  .modules-sidebar {
+    position: static !important;
+    max-height: 360px !important;
+    width: 100% !important;
+    padding: 1rem !important;
+    margin-bottom: 1rem;
+  }
+
+  .lesson-main-display {
+    padding: 1.25rem 1rem !important;
+    border-radius: var(--radius-lg) !important;
+  }
+
+  .lesson-main-title {
+    font-size: 1.4rem !important;
+    line-height: 1.3 !important;
+  }
+
+  .lesson-navigation-footer {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  .lesson-navigation-footer button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .quiz-option-btn {
+    padding: 12px 14px !important;
+    font-size: 0.9rem !important;
+    min-height: 48px;
+  }
+
+  /* Projects Showcase Mobile */
   .projects-hero-header {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
   }
+
+  .projects-hero-header button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
   .projects-filter-bar {
-    flex-direction: column;
-    align-items: stretch;
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    padding-bottom: 6px !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
   }
+
+  .projects-filter-bar::-webkit-scrollbar {
+    display: none;
+  }
+
   .projects-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem !important;
+  }
+
+  /* Community Tab Mobile */
+  .community-layout {
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem !important;
+  }
+
+  .create-post-box, .post-card {
+    padding: 1.25rem !important;
+  }
+
+  /* Leaderboard Mobile */
+  .leaderboard-podium {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 1rem !important;
+  }
+
+  .podium-card {
+    width: 100% !important;
+    max-width: 320px !important;
+  }
+
+  .leaderboard-table-row {
+    padding: 8px 10px !important;
+    font-size: 0.85rem !important;
+  }
+
+  /* Modals Universal Responsive */
+  .modal-card {
+    width: 100% !important;
+    max-width: 95vw !important;
+    max-height: 92vh !important;
+    padding: 1.25rem !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Prevent iOS zoom on input focus */
+  input, select, textarea {
+    font-size: 16px !important;
   }
 }
 
