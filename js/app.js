@@ -2700,13 +2700,13 @@ class SkoolApp {
               <div style="display:flex; align-items:center; gap:8px; margin-bottom:0.75rem; font-weight:700; font-size:0.95rem;">
                 🎥 <span>Enlaces de Video (puedes agregar 1 o más)</span>
               </div>
-              <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px;">Pega los enlaces de YouTube o Vimeo. Las cajas de video vacías permanecerán <strong>totalmente ocultas</strong> para el estudiante.</p>
+              <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px;">Pega los enlaces de <strong>YouTube, Google Drive, Vimeo, Instagram o TikTok</strong>. Las cajas de video vacías permanecerán <strong>totalmente ocultas</strong> para el estudiante.</p>
 
               <div class="dynamic-list-editor" id="video-list-editor">
                 ${videoList.map((vUrl, idx) => `
                   <div class="dynamic-list-row" id="video-row-${idx}">
                     <span style="color:var(--accent-primary); font-weight:700; font-size:0.85rem; width:22px;">#${idx + 1}</span>
-                    <input type="text" class="form-control video-url-input" value="${vUrl}" placeholder="Ej: https://www.youtube.com/watch?v=..." style="flex:1;" />
+                    <input type="text" class="form-control video-url-input" value="${vUrl}" placeholder="Ej: https://drive.google.com/file/d/... o https://youtube.com/..." style="flex:1;" />
                     <button type="button" onclick="window.app._removeVideoRow(${idx})" style="background:none;border:none;color:var(--danger);font-size:1.2rem;cursor:pointer;padding:0 6px;" title="Eliminar video">✕</button>
                   </div>
                 `).join('')}
@@ -3019,7 +3019,7 @@ class SkoolApp {
     row.id = `video-row-${idx}`;
     row.innerHTML = `
       <span style="color:var(--accent-primary); font-weight:700; font-size:0.85rem; width:22px;">#${idx + 1}</span>
-      <input type="text" class="form-control video-url-input" placeholder="Ej: https://www.youtube.com/watch?v=..." style="flex:1;" />
+      <input type="text" class="form-control video-url-input" placeholder="Ej: https://drive.google.com/file/d/... o https://youtube.com/..." style="flex:1;" />
       <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--danger);font-size:1.2rem;cursor:pointer;padding:0 6px;" title="Eliminar video">✕</button>
     `;
     container.appendChild(row);

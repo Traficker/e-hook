@@ -108,6 +108,18 @@ export function parseVideoUrl(input) {
     };
   }
 
+  // 8. Google Drive Video: https://drive.google.com/file/d/FILE_ID/view or open?id=FILE_ID
+  const driveMatch = cleaned.match(/(?:drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=))([^/?#&]+)/i);
+  if (driveMatch && driveMatch[1]) {
+    return {
+      type: 'googledrive',
+      platform: 'Google Drive Video',
+      videoId: driveMatch[1],
+      isVertical: false,
+      embedUrl: `https://drive.google.com/file/d/${driveMatch[1]}/preview`
+    };
+  }
+
   // Fallback direct iframe URL or standard video source
   return {
     type: 'custom',
