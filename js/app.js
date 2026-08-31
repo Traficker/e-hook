@@ -29,6 +29,7 @@ class SkoolApp {
     this.newsPosts = [];
     this.selectedNewsArticleId = null;
     this.newsLoading = false;
+    this.draggedNewsIndex = null;
 
     // Supabase Auth State
     this.authModalOpen = false;
@@ -1495,28 +1496,31 @@ class SkoolApp {
     }
 
     const isSuperAdmin = this.isUserSuperAdmin();
-    // Orden personalizado: Respetar la secuencia manual definida por el Super Admin
-    const sortedPosts = [...posts].sort((a, b) => {
-      if (a.orderIndex !== undefined && b.orderIndex !== undefined) {
-        return a.orderIndex - b.orderIndex;
-      }
-      return (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0);
-    });
+    // Orden personalizado: Respetar 100% la posición manual definida por el Super Admin
+    const sortedPosts = [...posts].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
 
     return `
       <div class="news-layout">
         <!-- Header del Canal de Noticias -->
         <div class="news-banner-card">
-          <div class="flex-between">
+          <div class="flex-between" style="flex-wrap:wrap; gap:12px;">
             <div>
               <span class="badge-tag" style="background:rgba(99,102,241,0.2); color:var(--accent-primary);">📰 Canal Oficial de Novedades</span>
               <h1 style="font-size:1.8rem; margin:6px 0;">Noticias & Anuncios de los Cursos</h1>
-              <p style="color:var(--text-muted); font-size:0.95rem;">Mantente al día con los últimos avisos, actualizaciones de lecciones y novedades de la plataforma.</p>
+              <p style="color:var(--text-muted); font-size:0.95rem;">
+                Mantente al día con los últimos avisos, actualizaciones de lecciones y novedades de la plataforma.
+                ${isSuperAdmin ? '<span style="color:var(--accent-primary); font-weight:700; display:block; margin-top:4px;">💡 Como Super Admin, puedes arrastrar las tarjetas directamente para ordenarlas a placer.</span>' : ''}
+              </p>
             </div>
             ${isSuperAdmin ? `
-              <button class="btn-primary-action" onclick="window.app.openCreateNewsModal()" style="padding:12px 20px; font-size:0.95rem; white-space:nowrap; box-shadow:0 4px 14px rgba(99,102,241,0.35);">
-                ➕ Publicar Nueva Noticia
-              </button>
+              <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button class="btn btn-ghost" onclick="window.app.openReorderNewsModal()" style="padding:10px 16px; font-size:0.88rem; font-weight:700; background:var(--bg-sidebar); border:1px solid var(--border-color); border-radius:var(--radius-md); display:inline-flex; align-items:center; gap:6px;">
+                  🔀 Organizar Orden
+                </button>
+                <button class="btn-primary-action" onclick="window.app.openCreateNewsModal()" style="padding:11px 20px; font-size:0.92rem; white-space:nowrap; box-shadow:0 4px 14px rgba(99,102,241,0.35);">
+                  ➕ Publicar Nueva Noticia
+                </button>
+              </div>
             ` : ''}
           </div>
         </div>
@@ -1536,7 +1540,27 @@ class SkoolApp {
             const sanitizedContent = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(news.content) : news.content;
 
             return `
-              <article class="news-card ${news.isPinned ? 'pinned' : ''}">
+              <article class="news-card ${news.isPinned ? 'pinned' : ''} ${isSuperAdmin ? 'draggable-admin' : ''}"
+                ${isSuperAdmin ? `
+                  draggable="true"
+                  ondragstart="window.app.handleNewsDragStart(event, ${index})"
+                  ondragover="window.app.handleNewsDragOver(event)"
+                  ondragenter="window.app.handleNewsDragEnter(event, ${index})"
+                  ondragleave="window.app.handleNewsDragLeave(event)"
+                  ondrop="window.app.handleNewsDrop(event, ${index})"
+                  ondragend="window.app.handleNewsDragEnd(event)"
+                ` : ''}>
+
+                ${isSuperAdmin ? `
+                  <div class="news-drag-header" title="Haz clic y arrastra esta tarjeta para cambiar su posición">
+                    <span style="font-size:0.75rem; font-weight:800; color:var(--accent-primary); display:flex; align-items:center; gap:6px;">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="5" r="1.5"></circle><circle cx="9" cy="12" r="1.5"></circle><circle cx="9" cy="19" r="1.5"></circle><circle cx="15" cy="5" r="1.5"></circle><circle cx="15" cy="12" r="1.5"></circle><circle cx="15" cy="19" r="1.5"></circle></svg>
+                      Posición #${index + 1}
+                    </span>
+                    <span style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">⠿ Arrastrar para mover</span>
+                  </div>
+                ` : ''}
+
                 ${parsedVideo && parsedVideo.embedUrl ? `
                   <div style="position:relative; width:100%; ${parsedVideo.type === 'instagram' ? 'height:490px;' : (parsedVideo.isVertical ? 'height:480px;' : 'padding-bottom:56.25%;')} background:#000; overflow:hidden;">
                     <iframe src="${parsedVideo.embedUrl}" style="position:absolute;top:0;left:0;width:100%;${parsedVideo.type === 'instagram' ? 'height:580px;' : 'height:100%;'}border:none;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowtransparency="true" scrolling="no" allowfullscreen loading="lazy"></iframe>
@@ -1579,12 +1603,6 @@ class SkoolApp {
 
                   ${isSuperAdmin ? `
                     <div class="admin-controls-strip" style="margin-top:12px; display:flex; flex-wrap:wrap; gap:6px;">
-                      <button class="btn-nav-step" style="padding:5px 9px; font-size:0.78rem; font-weight:700;" onclick="window.app.moveNewsUp(${index})" ${index === 0 ? 'disabled style="opacity:0.35; cursor:not-allowed;"' : ''} title="Mover hacia arriba">
-                        ⬆️ Subir
-                      </button>
-                      <button class="btn-nav-step" style="padding:5px 9px; font-size:0.78rem; font-weight:700;" onclick="window.app.moveNewsDown(${index})" ${index === sortedPosts.length - 1 ? 'disabled style="opacity:0.35; cursor:not-allowed;"' : ''} title="Mover hacia abajo">
-                        ⬇️ Bajar
-                      </button>
                       <button class="btn-nav-step" style="padding:5px 9px; font-size:0.78rem;" onclick="window.app.togglePinNews('${news.id}')">
                         ${news.isPinned ? 'Desfijar' : '📌 Fijar'}
                       </button>
@@ -1679,28 +1697,148 @@ class SkoolApp {
     `;
   }
 
-  // --- News Modal Controls & Super Admin Actions ---
-  async moveNewsUp(index) {
-    if (!this.isUserSuperAdmin() || index <= 0) return;
+  // --- Drag & Drop News Reordering ---
+  handleNewsDragStart(e, index) {
+    if (!this.isUserSuperAdmin()) return;
+    this.draggedNewsIndex = index;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(index));
+    setTimeout(() => {
+      if (e.target && e.target.classList) {
+        e.target.classList.add('dragging');
+      }
+    }, 0);
+  }
+
+  handleNewsDragOver(e) {
+    if (!this.isUserSuperAdmin()) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  }
+
+  handleNewsDragEnter(e, targetIndex) {
+    if (!this.isUserSuperAdmin()) return;
+    e.preventDefault();
+    const card = e.currentTarget;
+    if (this.draggedNewsIndex !== null && this.draggedNewsIndex !== targetIndex) {
+      card.classList.add('drag-over');
+    }
+  }
+
+  handleNewsDragLeave(e) {
+    if (!this.isUserSuperAdmin()) return;
+    if (e.currentTarget && e.currentTarget.classList) {
+      e.currentTarget.classList.remove('drag-over');
+    }
+  }
+
+  async handleNewsDrop(e, targetIndex) {
+    if (!this.isUserSuperAdmin()) return;
+    e.preventDefault();
+    if (e.currentTarget && e.currentTarget.classList) {
+      e.currentTarget.classList.remove('drag-over');
+    }
+    const fromIndex = this.draggedNewsIndex;
+    this.draggedNewsIndex = null;
+
+    if (fromIndex === null || fromIndex === undefined || fromIndex === targetIndex) return;
+
     const posts = [...((this.newsPosts && this.newsPosts.length > 0) ? this.newsPosts : [])];
-    if (index >= posts.length) return;
-    const temp = posts[index];
-    posts[index] = posts[index - 1];
-    posts[index - 1] = temp;
+    if (fromIndex < 0 || fromIndex >= posts.length || targetIndex < 0 || targetIndex >= posts.length) return;
+
+    const [movedItem] = posts.splice(fromIndex, 1);
+    posts.splice(targetIndex, 0, movedItem);
+
     this.newsPosts = await NewsService.reorderNews(posts);
-    this.showToast('⬆️ Noticia movida hacia arriba', 'info');
+    this.showToast(`✨ Noticia movida a la posición #${targetIndex + 1}`, 'success');
     this.render();
   }
 
-  async moveNewsDown(index) {
-    if (!this.isUserSuperAdmin()) return;
+  handleNewsDragEnd(e) {
+    this.draggedNewsIndex = null;
+    document.querySelectorAll('.news-card').forEach(c => {
+      c.classList.remove('dragging', 'drag-over');
+    });
+  }
+
+  // --- Modal Visual para Organizar Noticias ---
+  openReorderNewsModal() {
+    if (!this.isUserSuperAdmin()) {
+      this.showToast('⛔ Solo el Super Admin puede organizar noticias', 'error');
+      return;
+    }
+    const existing = document.getElementById('reorder-news-modal-overlay');
+    if (existing) existing.remove();
+
     const posts = [...((this.newsPosts && this.newsPosts.length > 0) ? this.newsPosts : [])];
-    if (index < 0 || index >= posts.length - 1) return;
-    const temp = posts[index];
-    posts[index] = posts[index + 1];
-    posts[index + 1] = temp;
+    const root = document.getElementById('admin-modal-root') || document.body;
+    const modalWrapper = document.createElement('div');
+    modalWrapper.id = 'reorder-news-modal-overlay';
+    modalWrapper.innerHTML = `
+      <div class="modal-overlay" style="display:flex; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.75); backdrop-filter:blur(6px); align-items:center; justify-content:center; z-index:9999; padding:20px;">
+        <div class="modal-card" style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-lg); width:100%; max-width:640px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 40px rgba(0,0,0,0.5); padding:24px;">
+          <div class="flex-between" style="margin-bottom:1.25rem; border-bottom:1px solid var(--border-color); padding-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <h2 style="font-size:1.25rem; font-weight:800; color:var(--text-main); margin:0;">🔀 Organizar Secuencia de Noticias</h2>
+              <p style="font-size:0.8rem; color:var(--text-muted); margin:4px 0 0 0;">Usa los botones para subir o bajar la posición de cada noticia y presiona Guardar.</p>
+            </div>
+            <button class="btn-close" onclick="document.getElementById('reorder-news-modal-overlay').remove()" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;">✕</button>
+          </div>
+
+          <div id="reorder-news-list" style="display:flex; flex-direction:column; gap:8px; margin-bottom:1.5rem;">
+            ${posts.map((n, idx) => `
+              <div class="reorder-item-row" data-id="${n.id}" style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--bg-sidebar); border:1px solid var(--border-color); border-radius:var(--radius-md); gap:12px;">
+                <div style="display:flex; align-items:center; gap:10px; overflow:hidden;">
+                  <span style="font-size:0.85rem; font-weight:800; background:var(--accent-gradient); color:#fff; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    ${idx + 1}
+                  </span>
+                  <div style="overflow:hidden;">
+                    <div style="font-size:0.9rem; font-weight:700; color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                      ${n.isPinned ? '📌 ' : ''}${n.title}
+                    </div>
+                    <div style="font-size:0.75rem; color:var(--text-muted);">${n.category} • ${n.date}</div>
+                  </div>
+                </div>
+                <div style="display:flex; gap:6px; flex-shrink:0;">
+                  <button type="button" class="btn-nav-step" style="padding:6px 10px; font-size:0.8rem; font-weight:800;" onclick="window.app.swapNewsInModal(${idx}, ${idx - 1})" ${idx === 0 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''}>
+                    ▲ Subir
+                  </button>
+                  <button type="button" class="btn-nav-step" style="padding:6px 10px; font-size:0.8rem; font-weight:800;" onclick="window.app.swapNewsInModal(${idx}, ${idx + 1})" ${idx === posts.length - 1 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''}>
+                    ▼ Bajar
+                  </button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:10px; border-top:1px solid var(--border-color); padding-top:14px;">
+            <button type="button" class="btn btn-ghost" onclick="document.getElementById('reorder-news-modal-overlay').remove()">Cancelar</button>
+            <button type="button" class="btn btn-primary" onclick="window.app.saveReorderedNewsFromModal()" style="padding:10px 24px; font-weight:700;">
+              💾 Guardar Nuevo Orden
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    root.appendChild(modalWrapper);
+  }
+
+  swapNewsInModal(fromIdx, toIdx) {
+    const posts = [...((this.newsPosts && this.newsPosts.length > 0) ? this.newsPosts : [])];
+    if (toIdx < 0 || toIdx >= posts.length) return;
+    const temp = posts[fromIdx];
+    posts[fromIdx] = posts[toIdx];
+    posts[toIdx] = temp;
+    this.newsPosts = posts;
+    this.openReorderNewsModal();
+  }
+
+  async saveReorderedNewsFromModal() {
+    const posts = [...((this.newsPosts && this.newsPosts.length > 0) ? this.newsPosts : [])];
     this.newsPosts = await NewsService.reorderNews(posts);
-    this.showToast('⬇️ Noticia movida hacia abajo', 'info');
+    const modal = document.getElementById('reorder-news-modal-overlay');
+    if (modal) modal.remove();
+    this.showToast('✅ Nuevo orden de noticias guardado en Supabase', 'success');
     this.render();
   }
 
