@@ -1489,8 +1489,8 @@ class SkoolApp {
             return `
               <article class="news-card ${news.isPinned ? 'pinned' : ''}">
                 ${parsedVideo && parsedVideo.embedUrl ? `
-                  <div style="position:relative; padding-bottom:56.25%; background:#000; overflow:hidden;">
-                    <iframe src="${parsedVideo.embedUrl}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allowfullscreen loading="lazy"></iframe>
+                  <div style="position:relative; ${parsedVideo.isVertical ? 'height:500px;' : 'padding-bottom:56.25%;'} background:#000; overflow:hidden;">
+                    <iframe src="${parsedVideo.embedUrl}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowtransparency="true" allowfullscreen loading="lazy"></iframe>
                   </div>
                 ` : (news.coverUrl ? `
                   <div class="news-cover-wrapper">
@@ -1502,7 +1502,7 @@ class SkoolApp {
                   <div class="news-card-header">
                     <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                       ${news.isPinned ? '<span class="news-badge-pinned">📌 Destacado</span>' : ''}
-                      ${parsedVideo ? '<span class="news-badge-category" style="background:rgba(239,68,68,0.2); color:#f87171; border-color:rgba(239,68,68,0.4);">🎥 Video Anuncio</span>' : ''}
+                      ${parsedVideo ? `<span class="news-badge-category" style="background:rgba(99,102,241,0.2); color:var(--accent-primary); border-color:rgba(99,102,241,0.4);">🎬 ${parsedVideo.platform || 'Multimedia'}</span>` : ''}
                       <span class="news-badge-category">${news.category || 'Anuncio'}</span>
                     </div>
                     <span class="news-date">${news.date}</span>
@@ -1520,15 +1520,15 @@ class SkoolApp {
                   </div>
 
                   ${isAdmin ? `
-                    <div class="news-admin-actions">
+                    <div class="admin-controls-strip">
+                      <button class="btn-nav-step" style="padding:6px 12px; font-size:0.8rem;" onclick="window.app.togglePinNews('${news.id}')">
+                        ${news.isPinned ? 'Desfijar' : '📌 Fijar'}
+                      </button>
                       <button class="btn-nav-step" style="padding:6px 12px; font-size:0.8rem;" onclick="window.app.openEditNewsModal('${news.id}')">
                         ✏️ Editar
                       </button>
-                      <button class="btn-nav-step" style="padding:6px 12px; font-size:0.8rem; border-color:var(--warning); color:var(--warning);" onclick="window.app.togglePinNews('${news.id}')">
-                        ${news.isPinned ? '📌 Quitar Destacado' : '📌 Destacar al Inicio'}
-                      </button>
-                      <button class="btn-danger-action" style="padding:6px 12px; font-size:0.8rem;" onclick="window.app.deleteNewsPost('${news.id}')">
-                        🗑️ Eliminar
+                      <button class="btn-nav-step" style="padding:6px 12px; font-size:0.8rem; border-color:var(--error); color:var(--error);" onclick="window.app.deleteNewsPost('${news.id}')">
+                        🗑️ Borrar
                       </button>
                     </div>
                   ` : ''}
@@ -1541,6 +1541,7 @@ class SkoolApp {
     `;
   }
 
+  // --- News Modal Controls ---
   openCreateNewsModal() {
     this._showNewsModalHTML(null);
   }
@@ -1560,22 +1561,22 @@ class SkoolApp {
     const modalWrapper = document.createElement('div');
     modalWrapper.id = 'news-modal-overlay';
     modalWrapper.innerHTML = `
-      <div style="position:fixed; inset:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); display:flex; align-items:center; justify-content:center; z-index:1000; padding:1rem;">
-        <div class="admin-panel-card" style="width:100%; max-width:650px; max-height:90vh; overflow-y:auto;">
-          <div class="flex-between" style="margin-bottom:1.5rem;">
-            <h2>${isEdit ? '✏️ Editar Noticia' : '➕ Publicar Nueva Noticia'}</h2>
-            <button type="button" onclick="document.getElementById('news-modal-overlay').remove()" style="background:none;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer;">✕</button>
+      <div class="modal-overlay" style="display:flex; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); backdrop-filter:blur(6px); align-items:center; justify-content:center; z-index:9999; padding:20px;">
+        <div class="modal-card" style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-lg); width:100%; max-width:620px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 40px rgba(0,0,0,0.5); padding:24px;">
+          <div class="flex-between" style="margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:12px;">
+            <h2 style="font-size:1.25rem; font-weight:800; color:var(--text-main); margin:0;">${isEdit ? '✏️ Editar Noticia' : '📢 Publicar Noticia o Aviso'}</h2>
+            <button class="btn-close" onclick="document.getElementById('news-modal-overlay').remove()" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;">✕</button>
           </div>
 
-          <form onsubmit="window.app.handleSaveNews(event, ${isEdit ? `'${news.id}'` : 'null'})">
-            <div class="form-group">
-              <label>📝 Título de la Noticia o Anuncio</label>
-              <input type="text" name="title" class="form-control" placeholder="Ej: 🚀 ¡Nuevo Módulo disponible la próxima semana!" value="${news?.title || ''}" required />
+          <form onsubmit="window.app.handleSaveNews(event, '${news ? news.id : ''}')">
+            <div class="form-group" style="margin-bottom:14px;">
+              <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:6px; color:var(--text-main);">Título del Aviso o Noticia</label>
+              <input type="text" name="title" class="form-control" placeholder="Ej: Nueva Masterclass de Meta Ads y WhatsApp Business..." value="${news?.title || ''}" required style="width:100%; border-radius:var(--radius-md); padding:10px;" />
             </div>
 
-            <div class="form-group">
-              <label>🏷️ Categoría de la Noticia</label>
-              <select name="category" class="form-control" required>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:6px; color:var(--text-main);">Categoría</label>
+              <select name="category" class="form-control" style="width:100%; border-radius:var(--radius-md); padding:10px;">
                 <option value="📢 Anuncio Oficial"${news?.category === '📢 Anuncio Oficial' ? ' selected' : ''}>📢 Anuncio Oficial</option>
                 <option value="🎉 Novedad"${news?.category === '🎉 Novedad' ? ' selected' : ''}>🎉 Novedad</option>
                 <option value="🚀 Lanzamiento"${news?.category === '🚀 Lanzamiento' ? ' selected' : ''}>🚀 Lanzamiento</option>
@@ -1583,30 +1584,30 @@ class SkoolApp {
               </select>
             </div>
 
-            <div class="form-group">
-              <label>🎥 Enlace de Video (YouTube / Vimeo) <span style="color:var(--text-muted); font-weight:400;">(Opcional)</span></label>
-              <input type="text" name="videoUrl" class="form-control" placeholder="https://www.youtube.com/watch?v=..." value="${news?.videoUrl || ''}" />
-              <small style="color:var(--text-muted);">Si pegas un enlace de video, se incrustará un reproductor interactivo en la tarjeta de noticia.</small>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:6px; color:var(--text-main);">🎬 Enlace Multimedia (YouTube / Instagram Reel / TikTok / Vimeo) <span style="color:var(--text-muted); font-weight:400;">(Opcional)</span></label>
+              <input type="text" name="videoUrl" class="form-control" placeholder="https://www.instagram.com/reel/... o youtube.com/watch?v=... o tiktok.com/@.../video/..." value="${news?.videoUrl || ''}" style="width:100%; border-radius:var(--radius-md); padding:10px;" />
+              <small style="color:var(--text-muted); display:block; margin-top:4px;">Pega un link de YouTube, Instagram (Post/Reel), TikTok o Vimeo y se incrustará de forma interactiva.</small>
             </div>
 
-            <div class="form-group">
-              <label>🖼️ URL de Imagen de Portada <span style="color:var(--text-muted); font-weight:400;">(Opcional si no usas video)</span></label>
-              <input type="text" name="coverUrl" class="form-control" placeholder="https://images.unsplash.com/photo-..." value="${news?.coverUrl || ''}" />
+            <div class="form-group" style="margin-bottom:14px;">
+              <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:6px; color:var(--text-main);">🖼️ URL de Imagen de Portada <span style="color:var(--text-muted); font-weight:400;">(Opcional si no usas multimedia)</span></label>
+              <input type="text" name="coverUrl" class="form-control" placeholder="https://images.unsplash.com/photo-..." value="${news?.coverUrl || ''}" style="width:100%; border-radius:var(--radius-md); padding:10px;" />
             </div>
 
-            <div class="form-group">
-              <label>📖 Contenido completo del aviso</label>
-              <textarea name="content" class="form-control" style="height:150px;" placeholder="Escribe la información detallada que quieres comunicar a los estudiantes..." required>${news?.content || ''}</textarea>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:6px; color:var(--text-main);">📖 Contenido completo del aviso</label>
+              <textarea name="content" class="form-control" style="width:100%; height:130px; border-radius:var(--radius-md); padding:10px; resize:vertical;" placeholder="Escribe la información detallada que quieres comunicar a los estudiantes..." required>${news?.content || ''}</textarea>
             </div>
 
-            <div class="form-group" style="display:flex; align-items:center; gap:8px;">
+            <div class="form-group" style="display:flex; align-items:center; gap:8px; margin-bottom:20px;">
               <input type="checkbox" name="isPinned" id="news-pinned-check" ${news?.isPinned ? 'checked' : ''} style="width:18px; height:18px; cursor:pointer;" />
-              <label for="news-pinned-check" style="margin-bottom:0; cursor:pointer; font-weight:600;">📌 Fijar esta noticia al inicio de la página</label>
+              <label for="news-pinned-check" style="margin-bottom:0; cursor:pointer; font-weight:600; font-size:0.88rem;">📌 Fijar esta noticia al inicio de la página</label>
             </div>
 
-            <div class="flex-between" style="margin-top:1.5rem;">
-              <button type="button" class="btn-nav-step" onclick="document.getElementById('news-modal-overlay').remove()">Cancelar</button>
-              <button type="submit" class="btn-primary-action" style="padding:12px 28px;">
+            <div class="flex-between" style="display:flex; justify-content:flex-end; gap:10px; border-top:1px solid var(--border-color); padding-top:16px;">
+              <button type="button" class="btn btn-ghost" onclick="document.getElementById('news-modal-overlay').remove()">Cancelar</button>
+              <button type="submit" class="btn btn-primary" style="padding:10px 24px; font-weight:700;">
                 ${isEdit ? '💾 Guardar Cambios' : '📢 Publicar Noticia'}
               </button>
             </div>
