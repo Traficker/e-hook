@@ -1,4 +1,4 @@
-﻿import { getSupabase, isSupabaseReady } from './supabaseClient.js';
+import { getSupabase, isSupabaseReady } from './supabaseClient.js';
 import { initialData } from '../data/initialData.js';
 
 const STORAGE_NEWS_KEY = 'skoolx_news_cache_v34';
@@ -17,7 +17,7 @@ export class NewsService {
           .order('is_pinned', { ascending: false })
           .order('created_at', { ascending: false });
 
-        if (!error && data && data.length > 0) {
+        if (!error && Array.isArray(data)) {
           const mapped = data.map(n => ({
             id: n.id,
             title: n.title,
@@ -34,7 +34,7 @@ export class NewsService {
           this.saveLocalCache(mapped);
           return mapped;
         } else if (error) {
-          console.warn('⚠️ Nota: Tabla news_posts no encontrada aún en Supabase, usando cache local:', error.message);
+          console.warn('⚠️ Nota: Tabla news_posts no encontrada aún en Supabase o error de RLS:', error.message);
         }
       } catch (err) {
         console.warn('⚠️ Error al consultar news_posts en Supabase:', err);

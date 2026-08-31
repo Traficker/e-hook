@@ -1484,7 +1484,7 @@ class SkoolApp {
   }
 
   renderNews() {
-    const posts = (this.newsPosts && this.newsPosts.length > 0) ? this.newsPosts : (this.state.newsPosts || []);
+    const posts = (this.newsPosts !== null && this.newsPosts !== undefined) ? this.newsPosts : [];
 
     // Si el usuario seleccionó una noticia para leerla completa y ver su video
     if (this.selectedNewsArticleId) {
@@ -1525,19 +1525,20 @@ class SkoolApp {
               <p style="color:var(--text-muted);">El administrador publicará noticias y avisos pronto.</p>
             </div>
           ` : sortedPosts.map(news => {
-            const parsedVideo = news.videoUrl ? (window._parseVideoUrl || (() => null))(news.videoUrl) : null;
+            const mediaUrl = news.videoUrl || (news.coverUrl && (news.coverUrl.includes('instagram.com') || news.coverUrl.includes('instagr.am') || news.coverUrl.includes('tiktok.com') || news.coverUrl.includes('youtube.com') || news.coverUrl.includes('drive.google.com')) ? news.coverUrl : null);
+            const parsedVideo = mediaUrl ? (window._parseVideoUrl || (() => null))(mediaUrl) : null;
             const sanitizedTitle = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(news.title) : news.title;
             const sanitizedContent = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(news.content) : news.content;
 
             return `
               <article class="news-card ${news.isPinned ? 'pinned' : ''}">
                 ${parsedVideo && parsedVideo.embedUrl ? `
-                  <div style="position:relative; ${parsedVideo.isVertical ? 'height:480px;' : 'padding-bottom:56.25%;'} background:#000; overflow:hidden;">
-                    <iframe src="${parsedVideo.embedUrl}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowtransparency="true" allowfullscreen loading="lazy"></iframe>
+                  <div style="position:relative; width:100%; ${parsedVideo.type === 'instagram' ? 'min-height:560px; height:580px;' : (parsedVideo.isVertical ? 'height:480px;' : 'padding-bottom:56.25%;')} background:#000; overflow:hidden;">
+                    <iframe src="${parsedVideo.embedUrl}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowtransparency="true" scrolling="${parsedVideo.type === 'instagram' ? 'no' : 'auto'}" allowfullscreen loading="lazy"></iframe>
                   </div>
-                ` : (news.coverUrl ? `
+                ` : (news.coverUrl && !news.coverUrl.includes('instagram.com') && !news.coverUrl.includes('instagr.am') ? `
                   <div class="news-cover-wrapper" onclick="window.app.selectNewsArticle('${news.id}')" style="cursor:pointer;">
-                    <img src="${news.coverUrl}" alt="${sanitizedTitle}" class="news-cover-img" />
+                    <img src="${news.coverUrl}" alt="${sanitizedTitle}" class="news-cover-img" onerror="this.style.display='none'" />
                   </div>
                 ` : '')}
 
@@ -1595,7 +1596,8 @@ class SkoolApp {
 
   renderNewsArticleViewer(news) {
     const isAdmin = this.isUserAdmin();
-    const parsedVideo = news.videoUrl ? (window._parseVideoUrl || (() => null))(news.videoUrl) : null;
+    const mediaUrl = news.videoUrl || (news.coverUrl && (news.coverUrl.includes('instagram.com') || news.coverUrl.includes('instagr.am') || news.coverUrl.includes('tiktok.com') || news.coverUrl.includes('youtube.com') || news.coverUrl.includes('drive.google.com')) ? news.coverUrl : null);
+    const parsedVideo = mediaUrl ? (window._parseVideoUrl || (() => null))(mediaUrl) : null;
     const sanitizedTitle = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(news.title) : news.title;
     const sanitizedContent = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(news.content) : news.content;
 
@@ -1635,11 +1637,11 @@ class SkoolApp {
           <!-- Video Player o Portada -->
           ${parsedVideo && parsedVideo.embedUrl ? `
             <div style="margin-bottom:2.5rem;">
-              ${renderVideoContainer(news.videoUrl, sanitizedTitle)}
+              ${renderVideoContainer(mediaUrl, sanitizedTitle)}
             </div>
-          ` : (news.coverUrl ? `
+          ` : (news.coverUrl && !news.coverUrl.includes('instagram.com') && !news.coverUrl.includes('instagr.am') ? `
             <div style="border-radius:var(--radius-lg); overflow:hidden; margin-bottom:2.5rem; max-height:480px;">
-              <img src="${news.coverUrl}" alt="${sanitizedTitle}" style="width:100%; height:100%; object-fit:cover;" />
+              <img src="${news.coverUrl}" alt="${sanitizedTitle}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'" />
             </div>
           ` : '')}
 
@@ -1748,12 +1750,19 @@ class SkoolApp {
   async handleSaveNews(e, newsId) {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const title = formData.get('title');
+    const title = formData.get('title')?.trim() || '';
     const category = formData.get('category');
-    const videoUrl = formData.get('videoUrl');
-    const coverUrl = formData.get('coverUrl');
-    const content = formData.get('content');
+    let videoUrl = formData.get('videoUrl')?.trim() || '';
+    let coverUrl = formData.get('coverUrl')?.trim() || '';
+    const content = formData.get('content')?.trim() || '';
     const isPinned = e.target.querySelector('#news-pinned-check')?.checked || false;
+
+    // Si pegaron un enlace de video / Instagram / TikTok / Drive en coverUrl por equivocación, moverlo automáticamente a videoUrl
+    const isCoverActuallyVideo = (window._parseVideoUrl || parseVideoUrl)(coverUrl);
+    if (isCoverActuallyVideo && isCoverActuallyVideo.type !== 'none' && isCoverActuallyVideo.type !== 'custom') {
+      if (!videoUrl) videoUrl = coverUrl;
+      coverUrl = '';
+    }
 
     const user = this.authenticatedUser || {
       name: this.state.currentUser.name,

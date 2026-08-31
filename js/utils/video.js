@@ -71,16 +71,16 @@ export function parseVideoUrl(input) {
     };
   }
 
-  // 5. Instagram (Post, Reel, TV): https://www.instagram.com/p/ID/ or /reel/ID/
-  const igMatch = cleaned.match(/(?:instagram\.com\/(?:p|reel|tv)\/)([^/?#&]+)/i);
+  // 5. Instagram (Post, Reel, TV, Reels, Share):
+  const igMatch = cleaned.match(/(?:instagram\.com|instagr\.am)\/(?:[a-zA-Z0-9_.]+\/)?(?:p|reel|reels|tv|share\/reel|share\/p)\/([a-zA-Z0-9_-]+)/i);
   if (igMatch && igMatch[1]) {
-    const isReel = cleaned.toLowerCase().includes('/reel/');
+    const isReel = cleaned.toLowerCase().includes('/reel');
     return {
       type: 'instagram',
       platform: isReel ? 'Instagram Reel' : 'Instagram Post',
       videoId: igMatch[1],
       isVertical: true,
-      embedUrl: `https://www.instagram.com/p/${igMatch[1]}/embed/captioned/`
+      embedUrl: `https://www.instagram.com/p/${igMatch[1]}/embed/`
     };
   }
 
@@ -149,6 +149,34 @@ export function renderVideoContainer(videoUrl, title = 'Contenido Multimedia') {
 
   const isVertical = parsed.isVertical;
   const platformName = parsed.platform || 'Reproduciendo dentro de SkoolX';
+
+  if (parsed.type === 'instagram') {
+    return `
+      <div class="video-player-wrapper instagram-media-wrapper" style="max-width:500px; margin:0 auto; border-radius:var(--radius-lg); overflow:hidden; background:#000; box-shadow:0 12px 35px rgba(0,0,0,0.6);">
+        <div style="position:relative; width:100%; min-height:580px; height:600px; background:#000;">
+          <iframe
+            src="${parsed.embedUrl}"
+            title="${title}"
+            style="width:100%; height:100%; min-height:580px; border:none; display:block;"
+            frameborder="0"
+            scrolling="no"
+            allowtransparency="true"
+            allow="encrypted-media"
+            loading="lazy">
+          </iframe>
+        </div>
+        <div class="video-bar">
+          <span class="video-tag">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            ${platformName}
+          </span>
+          <span class="video-note">🔒 Incrustado oficial interactivo</span>
+        </div>
+      </div>
+    `;
+  }
 
   if (isVertical) {
     return `
