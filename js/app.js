@@ -1,11 +1,12 @@
 import { loadState, saveState, resetToInitial } from './services/storage.js';
 import { renderVideoContainer } from './utils/video.js';
 import { getSupabase, isSupabaseReady } from './services/supabaseClient.js';
+import { ProjectsService } from './services/projectsService.js';
 
 class SkoolApp {
   constructor() {
     this.state = loadState();
-    this.currentTab = 'classroom'; // 'community', 'classroom', 'leaderboard', 'admin'
+    this.currentTab = 'classroom'; // 'projects', 'community', 'classroom', 'leaderboard', 'admin'
     this.selectedCourseId = 'course_ehook';
     this.selectedModuleId = 'mod_1';
     this.selectedLessonId = 'm1_l1';
@@ -14,6 +15,14 @@ class SkoolApp {
     this.isCreatingLessonInModule = null;
     this.searchQuery = '';
     this.searchActive = false;
+
+    // Projects State
+    this.projects = [];
+    this.projectsFilter = 'Todos';
+    this.projectsSearch = '';
+    this.projectModalOpen = false;
+    this.projectEditing = null;
+    this.projectLoading = false;
 
     // Supabase Auth State
     this.authModalOpen = false;
@@ -33,8 +42,23 @@ class SkoolApp {
 
   init() {
     this.initSupabaseAuth();
+    this.loadProjects();
     this.render();
     this.attachGlobalListeners();
+  }
+
+  async loadProjects() {
+    this.projectLoading = true;
+    try {
+      this.projects = await ProjectsService.fetchProjects();
+    } catch (e) {
+      console.warn('⚠️ Error al cargar proyectos:', e);
+    } finally {
+      this.projectLoading = false;
+      if (this.currentTab === 'projects') {
+        this.render();
+      }
+    }
   }
 
   async fetchUserProfile(user) {
@@ -171,6 +195,7 @@ class SkoolApp {
       </main>
       ${this.renderAuthModal()}
       ${this.renderCreateCourseModal()}
+      ${this.renderProjectModal()}
     `;
 
     // Re-initialize Lucide Icons for dynamic content
@@ -764,6 +789,9 @@ class SkoolApp {
           <button class="tab-btn ${this.currentTab === 'classroom' ? 'active' : ''}" onclick="window.app.switchTab('classroom')">
             <i data-lucide="book-open"></i> Aulas / Cursos
           </button>
+          <button class="tab-btn ${this.currentTab === 'projects' ? 'active' : ''}" onclick="window.app.switchTab('projects')">
+            <i data-lucide="folder-git-2"></i> Proyectos
+          </button>
           <button class="tab-btn ${this.currentTab === 'news' ? 'active' : ''}" onclick="window.app.switchTab('news')">
             <i data-lucide="newspaper"></i> Noticias
           </button>
@@ -827,6 +855,8 @@ class SkoolApp {
     switch (this.currentTab) {
       case 'classroom':
         return this.renderClassroom();
+      case 'projects':
+        return this.renderProjectsTab();
       case 'news':
         return this.renderNews();
       case 'community':
@@ -1648,6 +1678,350 @@ class SkoolApp {
       state.newsPosts = (state.newsPosts || []).filter(n => n.id !== newsId);
     });
     this.showToast('🗑️ Noticia eliminada', 'info');
+  }
+
+  // ==========================================================================
+  // PROJECTS SHOWCASE TAB & HANDLERS
+  // ==========================================================================
+
+  renderProjectsTab() {
+    const activeFilter = this.projectsFilter || 'Todos';
+    const searchQuery = (this.projectsSearch || '').toLowerCase().trim();
+    const availableTags = ['Todos', 'Meta Ads', 'Shopify', 'WhatsApp Business', 'E-commerce', 'Automatización', 'Funnel'];
+
+    // Filtrar proyectos
+    const filteredProjects = (this.projects || []).filter(p => {
+      const matchesTag = activeFilter === 'Todos' || (p.tags && p.tags.includes(activeFilter));
+      const matchesSearch = !searchQuery || 
+        (p.title && p.title.toLowerCase().includes(searchQuery)) ||
+        (p.description && p.description.toLowerCase().includes(searchQuery)) ||
+        (p.creator_name && p.creator_name.toLowerCase().includes(searchQuery));
+      return matchesTag && matchesSearch;
+    });
+
+    const currentUserId = this.authenticatedUser ? this.authenticatedUser.id : this.state.currentUser.id;
+    const isSuperAdmin = this.authenticatedUser?.role === 'superadmin' || this.state.currentUser?.role === 'superadmin';
+
+    return `
+      <div class="projects-container">
+        <!-- Hero Header -->
+        <div class="projects-hero-header">
+          <div>
+            <div class="projects-hero-title">
+              <i data-lucide="folder-git-2" style="color:var(--accent-primary);"></i>
+              <span>Proyectos de la Comunidad</span>
+              <span style="font-size:0.75rem; background:rgba(99,102,241,0.15); color:var(--accent-primary); border:1px solid rgba(99,102,241,0.3); padding:3px 10px; border-radius:20px; font-weight:700;">Showcase</span>
+            </div>
+            <p class="projects-hero-subtitle">
+              Explora, inspírate y comparte tus implementaciones reales de E-commerce, Meta Ads y automatizaciones.
+            </p>
+          </div>
+          <div>
+            <button class="btn btn-primary" onclick="window.app.openCreateProjectModal()" style="display:flex; align-items:center; gap:8px; font-weight:700; padding:10px 18px; border-radius:var(--radius-md); box-shadow:0 4px 14px rgba(99,102,241,0.35);">
+              <i data-lucide="plus-circle" style="width:18px; height:18px;"></i>
+              <span>Publicar Proyecto</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter & Search Controls -->
+        <div class="projects-filter-bar">
+          <div class="projects-tag-pills">
+            ${availableTags.map(tag => `
+              <button class="project-tag-pill ${activeFilter === tag ? 'active' : ''}" onclick="window.app.handleProjectFilter('${tag}')">
+                ${tag}
+              </button>
+            `).join('')}
+          </div>
+
+          <div style="position:relative; min-width:240px;">
+            <input type="text" class="form-control" placeholder="Buscar proyectos..." 
+                   value="${this.projectsSearch || ''}" 
+                   oninput="window.app.handleProjectSearch(this.value)"
+                   style="padding-left:34px; padding-right:12px; font-size:0.85rem; height:38px; border-radius:20px; background:var(--bg-sidebar);" />
+            <i data-lucide="search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:var(--text-muted); pointer-events:none;"></i>
+          </div>
+        </div>
+
+        <!-- Projects Grid -->
+        ${this.projectLoading ? `
+          <div style="text-align:center; padding:3rem; color:var(--text-muted);">
+            <div style="display:inline-block; animation:spin 1s linear infinite; margin-bottom:10px;">
+              <i data-lucide="loader-2" style="width:32px; height:32px; color:var(--accent-primary);"></i>
+            </div>
+            <p style="font-weight:600;">Cargando proyectos de Supabase...</p>
+          </div>
+        ` : filteredProjects.length === 0 ? `
+          <div class="project-empty-state">
+            <div class="project-empty-icon">📁</div>
+            <h3 style="font-size:1.2rem; font-weight:700; color:var(--text-main); margin-bottom:6px;">No se encontraron proyectos</h3>
+            <p style="color:var(--text-muted); font-size:0.88rem; max-width:450px; margin:0 auto 1.5rem auto;">
+              ${searchQuery || activeFilter !== 'Todos' ? 'No hay proyectos que coincidan con tus filtros actuales.' : 'Sé el primero en compartir tu caso de éxito o implementación.'}
+            </p>
+            <div style="display:flex; justify-content:center; gap:10px;">
+              ${searchQuery || activeFilter !== 'Todos' ? `
+                <button class="btn btn-ghost" onclick="window.app.handleProjectFilter('Todos'); window.app.handleProjectSearch('');" style="border:1px solid var(--border-color);">
+                  Restablecer Filtros
+                </button>
+              ` : ''}
+              <button class="btn btn-primary" onclick="window.app.openCreateProjectModal()">
+                <i data-lucide="plus" style="width:16px; height:16px;"></i> Publicar Proyecto
+              </button>
+            </div>
+          </div>
+        ` : `
+          <div class="projects-grid">
+            ${filteredProjects.map(p => {
+              const hasLiked = ProjectsService.hasUserLiked(p.id, currentUserId);
+              const isOwner = isSuperAdmin || (p.creator_id && (p.creator_id === currentUserId || p.creator_id === this.authenticatedUser?.id));
+              const sanitizedTitle = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(p.title) : p.title;
+              const sanitizedDesc = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(p.description) : p.description;
+
+              let timeStr = 'Reciente';
+              if (p.created_at) {
+                try {
+                  const d = new Date(p.created_at);
+                  timeStr = d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+                } catch (e) {}
+              }
+
+              return `
+                <div class="project-card">
+                  <div class="project-cover-wrapper">
+                    ${p.cover_url ? `
+                      <img src="${p.cover_url}" class="project-cover-img" alt="${sanitizedTitle}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                      <div class="project-cover-placeholder" style="display:none;">🚀</div>
+                    ` : `
+                      <div class="project-cover-placeholder">🚀</div>
+                    `}
+                  </div>
+
+                  <div class="project-card-content">
+                    <div class="project-tags-list">
+                      ${(p.tags || []).map(tag => `
+                        <span class="project-tag-badge">${tag}</span>
+                      `).join('')}
+                    </div>
+
+                    <h3 class="project-card-title">${sanitizedTitle}</h3>
+                    <p class="project-card-desc">${sanitizedDesc}</p>
+
+                    <div class="project-author-row">
+                      <div class="project-author-info">
+                        <img src="${p.creator_avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'}" 
+                             class="project-author-avatar" alt="${p.creator_name || 'Autor'}" />
+                        <div>
+                          <div class="project-author-name">${p.creator_name || 'Estudiante'}</div>
+                          <div class="project-date">${timeStr}</div>
+                        </div>
+                      </div>
+
+                      ${isOwner ? `
+                        <div style="display:flex; align-items:center; gap:4px;">
+                          <button class="btn btn-ghost btn-sm" onclick="window.app.openEditProjectModal('${p.id}')" title="Editar proyecto" style="padding:4px 6px; color:var(--text-muted); cursor:pointer;">
+                            <i data-lucide="edit-2" style="width:14px; height:14px;"></i>
+                          </button>
+                          <button class="btn btn-ghost btn-sm" onclick="window.app.handleDeleteProject('${p.id}')" title="Eliminar proyecto" style="padding:4px 6px; color:var(--error); cursor:pointer;">
+                            <i data-lucide="trash-2" style="width:14px; height:14px;"></i>
+                          </button>
+                        </div>
+                      ` : ''}
+                    </div>
+
+                    <div class="project-actions-bar">
+                      <div class="project-links-group">
+                        ${p.demo_url ? `
+                          <a href="${p.demo_url}" target="_blank" rel="noopener noreferrer" class="btn-project-link">
+                            <i data-lucide="external-link" style="width:13px; height:13px;"></i>
+                            <span>Ver Demo</span>
+                          </a>
+                        ` : ''}
+                        ${p.repo_url ? `
+                          <a href="${p.repo_url}" target="_blank" rel="noopener noreferrer" class="btn-project-link">
+                            <i data-lucide="github" style="width:13px; height:13px;"></i>
+                            <span>Repo</span>
+                          </a>
+                        ` : ''}
+                      </div>
+
+                      <button class="btn-project-like ${hasLiked ? 'liked' : ''}" onclick="window.app.handleToggleProjectLike('${p.id}')" title="Dar me gusta">
+                        <i data-lucide="heart" style="width:14px; height:14px;"></i>
+                        <span>${p.likes_count || 0}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `}
+      </div>
+    `;
+  }
+
+  openCreateProjectModal() {
+    this.projectEditing = null;
+    this.projectModalOpen = true;
+    this.render();
+  }
+
+  openEditProjectModal(projectId) {
+    const target = (this.projects || []).find(p => p.id === projectId);
+    if (!target) return;
+    this.projectEditing = target;
+    this.projectModalOpen = true;
+    this.render();
+  }
+
+  closeProjectModal() {
+    this.projectModalOpen = false;
+    this.projectEditing = null;
+    this.render();
+  }
+
+  handleProjectFilter(tag) {
+    this.projectsFilter = tag;
+    this.render();
+  }
+
+  handleProjectSearch(query) {
+    this.projectsSearch = query;
+    this.render();
+  }
+
+  async handleToggleProjectLike(projectId) {
+    const currentUserId = this.authenticatedUser ? this.authenticatedUser.id : this.state.currentUser.id;
+    const res = await ProjectsService.toggleLike(projectId, currentUserId);
+    
+    this.projects = this.projects.map(p => {
+      if (p.id === projectId) {
+        return { ...p, likes_count: res.count };
+      }
+      return p;
+    });
+
+    this.render();
+  }
+
+  async handleDeleteProject(projectId) {
+    if (!confirm('¿Estás seguro de que deseas eliminar este proyecto? Esta acción no se puede deshacer.')) return;
+    
+    const user = this.authenticatedUser || this.state.currentUser;
+    await ProjectsService.deleteProject(projectId, user);
+    this.projects = this.projects.filter(p => p.id !== projectId);
+    this.showToast('🗑️ Proyecto eliminado con éxito', 'info');
+    this.render();
+  }
+
+  async handleSaveProject(event) {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    const title = formData.get('title');
+    const description = formData.get('description');
+    const cover_url = formData.get('cover_url');
+    const demo_url = formData.get('demo_url');
+    const repo_url = formData.get('repo_url');
+    const tagsRaw = formData.get('tags') || '';
+
+    const tags = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+
+    const projectData = {
+      title,
+      description,
+      cover_url,
+      demo_url,
+      repo_url,
+      tags
+    };
+
+    const user = this.authenticatedUser || {
+      id: this.state.currentUser.id,
+      fullName: this.state.currentUser.name,
+      avatar: this.state.currentUser.avatar
+    };
+
+    try {
+      if (this.projectEditing) {
+        const updated = await ProjectsService.updateProject(this.projectEditing.id, projectData, user);
+        this.projects = this.projects.map(p => p.id === this.projectEditing.id ? updated : p);
+        this.showToast('✅ Proyecto actualizado correctamente', 'success');
+      } else {
+        const created = await ProjectsService.createProject(projectData, user);
+        this.projects = [created, ...this.projects];
+        this.triggerConfetti();
+        this.addXP(30);
+        this.showToast('🎉 ¡Proyecto publicado con éxito! (+30 XP)', 'success');
+      }
+
+      this.closeProjectModal();
+    } catch (err) {
+      console.error('Error saving project:', err);
+      this.showToast('⚠️ Error al guardar el proyecto', 'error');
+    }
+  }
+
+  renderProjectModal() {
+    if (!this.projectModalOpen) return '';
+
+    const p = this.projectEditing || {};
+    const isEdit = !!this.projectEditing;
+    const defaultTags = (p.tags || ['Meta Ads', 'E-commerce']).join(', ');
+
+    return `
+      <div class="modal-overlay" onclick="if(event.target === this) window.app.closeProjectModal()" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; z-index:9999; padding:20px;">
+        <div class="modal-card" style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-lg); width:100%; max-width:560px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 40px rgba(0,0,0,0.5); padding:24px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; border-bottom:1px solid var(--border-color); padding-bottom:12px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <i data-lucide="${isEdit ? 'edit-3' : 'plus-circle'}" style="color:var(--accent-primary);"></i>
+              <h3 style="margin:0; font-size:1.2rem; font-weight:800; color:var(--text-main);">${isEdit ? 'Editar Proyecto' : 'Publicar Nuevo Proyecto'}</h3>
+            </div>
+            <button class="btn-close" onclick="window.app.closeProjectModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;">✕</button>
+          </div>
+
+          <form onsubmit="window.app.handleSaveProject(event)">
+            <div class="form-group" style="margin-bottom:14px;">
+              <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:6px; color:var(--text-main);">Título del Proyecto *</label>
+              <input type="text" name="title" class="form-control" placeholder="Ej: Campaña de Escalamiento Meta Ads en Shopify" value="${p.title || ''}" required style="width:100%; border-radius:var(--radius-md); padding:10px;" />
+            </div>
+
+            <div class="form-group" style="margin-bottom:14px;">
+              <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:6px; color:var(--text-main);">Descripción o Aprendizaje Clave *</label>
+              <textarea name="description" class="form-control" rows="4" placeholder="Explica qué implementaste, qué herramientas usaste y qué resultados obtuviste..." required style="width:100%; border-radius:var(--radius-md); padding:10px; resize:vertical;">${p.description || ''}</textarea>
+            </div>
+
+            <div class="form-group" style="margin-bottom:14px;">
+              <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:6px; color:var(--text-main);">URL de Portada / Imagen (Opcional)</label>
+              <input type="url" name="cover_url" class="form-control" placeholder="https://images.unsplash.com/..." value="${p.cover_url || ''}" style="width:100%; border-radius:var(--radius-md); padding:10px;" />
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+              <div class="form-group">
+                <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:6px; color:var(--text-main);">Enlace Demo / Tienda (Opcional)</label>
+                <input type="url" name="demo_url" class="form-control" placeholder="https://tutienda.com" value="${p.demo_url || ''}" style="width:100%; border-radius:var(--radius-md); padding:10px;" />
+              </div>
+              <div class="form-group">
+                <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:6px; color:var(--text-main);">Enlace GitHub / Repo (Opcional)</label>
+                <input type="url" name="repo_url" class="form-control" placeholder="https://github.com/..." value="${p.repo_url || ''}" style="width:100%; border-radius:var(--radius-md); padding:10px;" />
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:20px;">
+              <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:6px; color:var(--text-main);">Etiquetas / Tags (Separadas por comas)</label>
+              <input type="text" name="tags" class="form-control" placeholder="Meta Ads, Shopify, WhatsApp Business, Funnel" value="${defaultTags}" style="width:100%; border-radius:var(--radius-md); padding:10px;" />
+              <span style="font-size:0.75rem; color:var(--text-muted); display:block; margin-top:4px;">Sugerencias: Meta Ads, Shopify, WhatsApp Business, E-commerce, Automatización, Funnel</span>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:10px; border-top:1px solid var(--border-color); padding-top:16px;">
+              <button type="button" class="btn btn-ghost" onclick="window.app.closeProjectModal()">Cancelar</button>
+              <button type="submit" class="btn btn-primary" style="display:flex; align-items:center; gap:6px; font-weight:700; padding:10px 20px;">
+                <i data-lucide="check" style="width:16px; height:16px;"></i>
+                <span>${isEdit ? 'Guardar Cambios' : 'Publicar Ahora'}</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
   }
 
   // ==========================================================================
