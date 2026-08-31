@@ -7,7 +7,7 @@ import { NewsService } from './services/newsService.js';
 class SkoolApp {
   constructor() {
     this.state = loadState();
-    this.currentTab = 'classroom'; // 'projects', 'news', 'community', 'classroom', 'leaderboard', 'admin'
+    this.currentTab = 'news'; // 'news', 'classroom', 'projects', 'community', 'leaderboard', 'admin'
     this.selectedCourseId = 'course_ehook';
     this.selectedModuleId = 'mod_1';
     this.selectedLessonId = 'm1_l1';
@@ -808,14 +808,14 @@ class SkoolApp {
         </div>
 
         <nav class="nav-tabs">
+          <button class="tab-btn ${this.currentTab === 'news' ? 'active' : ''}" onclick="window.app.switchTab('news')">
+            <i data-lucide="newspaper"></i> Noticias
+          </button>
           <button class="tab-btn ${this.currentTab === 'classroom' ? 'active' : ''}" onclick="window.app.switchTab('classroom')">
             <i data-lucide="book-open"></i> Aulas / Cursos
           </button>
           <button class="tab-btn ${this.currentTab === 'projects' ? 'active' : ''}" onclick="window.app.switchTab('projects')">
             <i data-lucide="folder-git-2"></i> Proyectos
-          </button>
-          <button class="tab-btn ${this.currentTab === 'news' ? 'active' : ''}" onclick="window.app.switchTab('news')">
-            <i data-lucide="newspaper"></i> Noticias
           </button>
           <button class="tab-btn ${this.currentTab === 'community' ? 'active' : ''}" onclick="window.app.switchTab('community')">
             <i data-lucide="message-square"></i> Comunidad
