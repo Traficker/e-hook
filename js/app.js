@@ -2,11 +2,12 @@ import { loadState, saveState, resetToInitial } from './services/storage.js';
 import { renderVideoContainer } from './utils/video.js';
 import { getSupabase, isSupabaseReady } from './services/supabaseClient.js';
 import { ProjectsService } from './services/projectsService.js';
+import { NewsService } from './services/newsService.js';
 
 class SkoolApp {
   constructor() {
     this.state = loadState();
-    this.currentTab = 'classroom'; // 'projects', 'community', 'classroom', 'leaderboard', 'admin'
+    this.currentTab = 'classroom'; // 'projects', 'news', 'community', 'classroom', 'leaderboard', 'admin'
     this.selectedCourseId = 'course_ehook';
     this.selectedModuleId = 'mod_1';
     this.selectedLessonId = 'm1_l1';
@@ -23,6 +24,11 @@ class SkoolApp {
     this.projectModalOpen = false;
     this.projectEditing = null;
     this.projectLoading = false;
+
+    // News State
+    this.newsPosts = [];
+    this.selectedNewsArticleId = null;
+    this.newsLoading = false;
 
     // Supabase Auth State
     this.authModalOpen = false;
@@ -43,6 +49,7 @@ class SkoolApp {
   init() {
     this.initSupabaseAuth();
     this.loadProjects();
+    this.loadNews();
     this.render();
     this.attachGlobalListeners();
   }
@@ -56,6 +63,20 @@ class SkoolApp {
     } finally {
       this.projectLoading = false;
       if (this.currentTab === 'projects') {
+        this.render();
+      }
+    }
+  }
+
+  async loadNews() {
+    this.newsLoading = true;
+    try {
+      this.newsPosts = await NewsService.fetchNews();
+    } catch (e) {
+      console.warn('⚠️ Error al cargar noticias:', e);
+    } finally {
+      this.newsLoading = false;
+      if (this.currentTab === 'news') {
         this.render();
       }
     }
@@ -1451,10 +1472,29 @@ class SkoolApp {
   // NEWS & ANNOUNCEMENTS VIEW ("Pestaña de Noticias")
   // ==========================================================================
 
-  renderNews() {
-    const isAdmin = this.isUserAdmin();
-    const posts = this.state.newsPosts || [];
+  selectNewsArticle(newsId) {
+    this.selectedNewsArticleId = newsId;
+    this.render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
+  clearSelectedNewsArticle() {
+    this.selectedNewsArticleId = null;
+    this.render();
+  }
+
+  renderNews() {
+    const posts = (this.newsPosts && this.newsPosts.length > 0) ? this.newsPosts : (this.state.newsPosts || []);
+
+    // Si el usuario seleccionó una noticia para leerla completa y ver su video
+    if (this.selectedNewsArticleId) {
+      const article = posts.find(n => n.id === this.selectedNewsArticleId);
+      if (article) {
+        return this.renderNewsArticleViewer(article);
+      }
+    }
+
+    const isAdmin = this.isUserAdmin();
     // Sort: Pinned posts first
     const sortedPosts = [...posts].sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0));
 
@@ -1469,7 +1509,7 @@ class SkoolApp {
               <p style="color:var(--text-muted); font-size:0.95rem;">Mantente al día con los últimos avisos, actualizaciones de lecciones y novedades de la plataforma.</p>
             </div>
             ${isAdmin ? `
-              <button class="btn-primary-action" onclick="window.app.openCreateNewsModal()" style="padding:12px 20px; font-size:0.95rem; white-space:nowrap;">
+              <button class="btn-primary-action" onclick="window.app.openCreateNewsModal()" style="padding:12px 20px; font-size:0.95rem; white-space:nowrap; box-shadow:0 4px 14px rgba(99,102,241,0.35);">
                 ➕ Publicar Nueva Noticia
               </button>
             ` : ''}
@@ -1486,16 +1526,18 @@ class SkoolApp {
             </div>
           ` : sortedPosts.map(news => {
             const parsedVideo = news.videoUrl ? (window._parseVideoUrl || (() => null))(news.videoUrl) : null;
+            const sanitizedTitle = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(news.title) : news.title;
+            const sanitizedContent = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(news.content) : news.content;
 
             return `
               <article class="news-card ${news.isPinned ? 'pinned' : ''}">
                 ${parsedVideo && parsedVideo.embedUrl ? `
-                  <div style="position:relative; ${parsedVideo.isVertical ? 'height:500px;' : 'padding-bottom:56.25%;'} background:#000; overflow:hidden;">
+                  <div style="position:relative; ${parsedVideo.isVertical ? 'height:480px;' : 'padding-bottom:56.25%;'} background:#000; overflow:hidden;">
                     <iframe src="${parsedVideo.embedUrl}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowtransparency="true" allowfullscreen loading="lazy"></iframe>
                   </div>
                 ` : (news.coverUrl ? `
-                  <div class="news-cover-wrapper">
-                    <img src="${news.coverUrl}" alt="${news.title}" class="news-cover-img" />
+                  <div class="news-cover-wrapper" onclick="window.app.selectNewsArticle('${news.id}')" style="cursor:pointer;">
+                    <img src="${news.coverUrl}" alt="${sanitizedTitle}" class="news-cover-img" />
                   </div>
                 ` : '')}
 
@@ -1509,19 +1551,28 @@ class SkoolApp {
                     <span class="news-date">${news.date}</span>
                   </div>
 
-                  <h2 class="news-card-title">${news.title}</h2>
+                  <h2 class="news-card-title" onclick="window.app.selectNewsArticle('${news.id}')" style="cursor:pointer;" title="Clic para leer completa">
+                    ${sanitizedTitle}
+                  </h2>
 
                   <div class="news-author-row">
                     <img src="${news.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80'}" class="news-author-avatar" alt="${news.author}" />
                     <span>Publicado por <strong>${news.author}</strong></span>
                   </div>
 
-                  <div class="news-content-p">
-                    ${(news.content || '').replace(/\n/g, '<br>')}
+                  <div class="news-content-p" style="display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;">
+                    ${sanitizedContent.replace(/\n/g, '<br>')}
+                  </div>
+
+                  <div style="margin-top:14px;">
+                    <button class="btn-project-link" onclick="window.app.selectNewsArticle('${news.id}')" style="width:100%; justify-content:center; padding:8px 12px; font-weight:700;">
+                      <i data-lucide="book-open" style="width:14px; height:14px;"></i>
+                      <span>Entrar y Leer Noticia Completa</span>
+                    </button>
                   </div>
 
                   ${isAdmin ? `
-                    <div class="admin-controls-strip">
+                    <div class="admin-controls-strip" style="margin-top:12px;">
                       <button class="btn-nav-step" style="padding:6px 12px; font-size:0.8rem;" onclick="window.app.togglePinNews('${news.id}')">
                         ${news.isPinned ? 'Desfijar' : '📌 Fijar'}
                       </button>
@@ -1542,13 +1593,87 @@ class SkoolApp {
     `;
   }
 
+  renderNewsArticleViewer(news) {
+    const isAdmin = this.isUserAdmin();
+    const parsedVideo = news.videoUrl ? (window._parseVideoUrl || (() => null))(news.videoUrl) : null;
+    const sanitizedTitle = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(news.title) : news.title;
+    const sanitizedContent = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(news.content) : news.content;
+
+    return `
+      <div class="news-layout" style="max-width:960px; margin:0 auto; padding-bottom:3rem;">
+        <!-- Top Back Navigation Button -->
+        <div style="margin-bottom:1.5rem;">
+          <button class="btn btn-ghost" onclick="window.app.clearSelectedNewsArticle()" style="display:inline-flex; align-items:center; gap:8px; font-weight:700; color:var(--text-main); background:var(--bg-sidebar); border:1px solid var(--border-color); padding:8px 16px; border-radius:var(--radius-md); cursor:pointer;">
+            <i data-lucide="arrow-left" style="width:16px; height:16px;"></i>
+            <span>Volver a todas las noticias</span>
+          </button>
+        </div>
+
+        <!-- Article Reader Card -->
+        <article class="lesson-main-display" style="padding:2.5rem; border-radius:var(--radius-xl); box-shadow:0 12px 40px rgba(0,0,0,0.4);">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:1rem;">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              ${news.isPinned ? '<span class="news-badge-pinned">📌 Destacado</span>' : ''}
+              ${parsedVideo ? `<span class="news-badge-category" style="background:rgba(99,102,241,0.2); color:var(--accent-primary); border-color:rgba(99,102,241,0.4);">🎬 ${parsedVideo.platform || 'Multimedia'}</span>` : ''}
+              <span class="news-badge-category">${news.category || 'Anuncio'}</span>
+            </div>
+            <span style="font-size:0.85rem; color:var(--text-muted); font-weight:600;">${news.date}</span>
+          </div>
+
+          <h1 style="font-size:2.2rem; font-weight:800; line-height:1.3; color:var(--text-main); margin-bottom:1.25rem;">
+            ${sanitizedTitle}
+          </h1>
+
+          <div style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:var(--bg-sidebar); border:1px solid var(--border-color); border-radius:var(--radius-md); margin-bottom:2rem;">
+            <img src="${news.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80'}" style="width:42px; height:42px; border-radius:50%; object-fit:cover; border:1px solid var(--border-color);" alt="${news.author}" />
+            <div>
+              <div style="font-size:0.95rem; font-weight:700; color:var(--text-main);">${news.author}</div>
+              <div style="font-size:0.75rem; color:var(--text-muted);">Autor oficial del comunicado</div>
+            </div>
+          </div>
+
+          <!-- Video Player o Portada -->
+          ${parsedVideo && parsedVideo.embedUrl ? `
+            <div style="margin-bottom:2.5rem;">
+              ${renderVideoContainer(news.videoUrl, sanitizedTitle)}
+            </div>
+          ` : (news.coverUrl ? `
+            <div style="border-radius:var(--radius-lg); overflow:hidden; margin-bottom:2.5rem; max-height:480px;">
+              <img src="${news.coverUrl}" alt="${sanitizedTitle}" style="width:100%; height:100%; object-fit:cover;" />
+            </div>
+          ` : '')}
+
+          <!-- Contenido Completo -->
+          <div style="font-size:1.05rem; line-height:1.8; color:var(--text-main); white-space:pre-line; border-top:1px solid var(--border-color); padding-top:1.75rem;">
+            ${sanitizedContent}
+          </div>
+
+          ${isAdmin ? `
+            <div style="display:flex; gap:10px; margin-top:2.5rem; padding-top:1.5rem; border-top:1px solid var(--border-color); justify-content:flex-end; flex-wrap:wrap;">
+              <button class="btn-nav-step" style="padding:8px 16px;" onclick="window.app.togglePinNews('${news.id}')">
+                ${news.isPinned ? 'Desfijar' : '📌 Fijar Noticia'}
+              </button>
+              <button class="btn-nav-step" style="padding:8px 16px;" onclick="window.app.openEditNewsModal('${news.id}')">
+                ✏️ Editar Noticia
+              </button>
+              <button class="btn-nav-step" style="padding:8px 16px; border-color:var(--error); color:var(--error);" onclick="window.app.deleteNewsPost('${news.id}')">
+                🗑️ Eliminar Noticia
+              </button>
+            </div>
+          ` : ''}
+        </article>
+      </div>
+    `;
+  }
+
   // --- News Modal Controls ---
   openCreateNewsModal() {
     this._showNewsModalHTML(null);
   }
 
   openEditNewsModal(newsId) {
-    const target = (this.state.newsPosts || []).find(n => n.id === newsId);
+    const posts = (this.newsPosts && this.newsPosts.length > 0) ? this.newsPosts : (this.state.newsPosts || []);
+    const target = posts.find(n => n.id === newsId);
     if (!target) return;
     this._showNewsModalHTML(target);
   }
@@ -1571,7 +1696,7 @@ class SkoolApp {
 
           <form onsubmit="window.app.handleSaveNews(event, '${news ? news.id : ''}')">
             <div class="form-group" style="margin-bottom:14px;">
-              <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:6px; color:var(--text-main);">Título del Aviso o Noticia</label>
+              <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:6px; color:var(--text-main);">Título del Aviso o Noticia *</label>
               <input type="text" name="title" class="form-control" placeholder="Ej: Nueva Masterclass de Meta Ads y WhatsApp Business..." value="${news?.title || ''}" required style="width:100%; border-radius:var(--radius-md); padding:10px;" />
             </div>
 
@@ -1586,18 +1711,18 @@ class SkoolApp {
             </div>
 
             <div class="form-group" style="margin-bottom:14px;">
-              <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:6px; color:var(--text-main);">🎬 Enlace Multimedia (YouTube / Instagram Reel / TikTok / Vimeo) <span style="color:var(--text-muted); font-weight:400;">(Opcional)</span></label>
-              <input type="text" name="videoUrl" class="form-control" placeholder="https://www.instagram.com/reel/... o youtube.com/watch?v=... o tiktok.com/@.../video/..." value="${news?.videoUrl || ''}" style="width:100%; border-radius:var(--radius-md); padding:10px;" />
-              <small style="color:var(--text-muted); display:block; margin-top:4px;">Pega un link de YouTube, Instagram (Post/Reel), TikTok o Vimeo y se incrustará de forma interactiva.</small>
+              <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:6px; color:var(--text-main);">🎬 Enlace de Video (Google Drive / YouTube / Instagram / TikTok / Vimeo) <span style="color:var(--text-muted); font-weight:400;">(Opcional)</span></label>
+              <input type="text" name="videoUrl" class="form-control" placeholder="https://drive.google.com/file/d/... o https://youtube.com/..." value="${news?.videoUrl || ''}" style="width:100%; border-radius:var(--radius-md); padding:10px;" />
+              <small style="color:var(--text-muted); display:block; margin-top:4px;">Pega un link de Google Drive, YouTube, Instagram (Post/Reel), TikTok o Vimeo y se incrustará de forma interactiva.</small>
             </div>
 
             <div class="form-group" style="margin-bottom:14px;">
-              <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:6px; color:var(--text-main);">🖼️ URL de Imagen de Portada <span style="color:var(--text-muted); font-weight:400;">(Opcional si no usas multimedia)</span></label>
+              <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:6px; color:var(--text-main);">🖼️ URL de Imagen de Portada <span style="color:var(--text-muted); font-weight:400;">(Opcional si no usas video)</span></label>
               <input type="text" name="coverUrl" class="form-control" placeholder="https://images.unsplash.com/photo-..." value="${news?.coverUrl || ''}" style="width:100%; border-radius:var(--radius-md); padding:10px;" />
             </div>
 
             <div class="form-group" style="margin-bottom:14px;">
-              <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:6px; color:var(--text-main);">📖 Contenido completo del aviso</label>
+              <label style="display:block; font-size:0.82rem; font-weight:700; margin-bottom:6px; color:var(--text-main);">📖 Contenido completo del aviso *</label>
               <textarea name="content" class="form-control" style="width:100%; height:130px; border-radius:var(--radius-md); padding:10px; resize:vertical;" placeholder="Escribe la información detallada que quieres comunicar a los estudiantes..." required>${news?.content || ''}</textarea>
             </div>
 
@@ -1620,7 +1745,7 @@ class SkoolApp {
     if (window.lucide) window.lucide.createIcons();
   }
 
-  handleSaveNews(e, newsId) {
+  async handleSaveNews(e, newsId) {
     e.preventDefault();
     const formData = new FormData(e.target);
     const title = formData.get('title');
@@ -1628,58 +1753,49 @@ class SkoolApp {
     const videoUrl = formData.get('videoUrl');
     const coverUrl = formData.get('coverUrl');
     const content = formData.get('content');
-    const isPinned = e.target.querySelector('#news-pinned-check').checked;
+    const isPinned = e.target.querySelector('#news-pinned-check')?.checked || false;
 
-    const today = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+    const user = this.authenticatedUser || {
+      name: this.state.currentUser.name,
+      avatar: this.state.currentUser.avatar
+    };
 
-    this.updateState(state => {
-      if (!state.newsPosts) state.newsPosts = [];
-
+    try {
       if (newsId) {
-        const item = state.newsPosts.find(n => n.id === newsId);
-        if (item) {
-          item.title = title;
-          item.category = category;
-          item.videoUrl = videoUrl;
-          item.coverUrl = coverUrl;
-          item.content = content;
-          item.isPinned = isPinned;
-        }
+        await NewsService.updateNews(newsId, { title, category, videoUrl, coverUrl, content, isPinned });
+        this.showToast('💾 Noticia actualizada en Supabase', 'success');
       } else {
-        state.newsPosts.unshift({
-          id: `news_${Date.now()}`,
-          title,
-          category,
-          date: today,
-          isPinned,
-          author: `${this.state.currentUser.name} (Admin)`,
-          avatar: this.state.currentUser.avatar,
-          videoUrl,
-          coverUrl,
-          content
-        });
+        await NewsService.createNews({ title, category, videoUrl, coverUrl, content, isPinned }, user);
+        this.triggerConfetti();
+        this.showToast('📢 Noticia publicada con éxito en Supabase', 'success');
       }
-    });
 
-    const overlay = document.getElementById('news-modal-overlay');
-    if (overlay) overlay.remove();
-    this.showToast(newsId ? '💾 Noticia actualizada' : '📢 Noticia publicada con éxito', 'success');
+      this.newsPosts = await NewsService.fetchNews();
+      const overlay = document.getElementById('news-modal-overlay');
+      if (overlay) overlay.remove();
+      this.render();
+    } catch (err) {
+      console.error('Error al guardar noticia:', err);
+      this.showToast('⚠️ Error al guardar la noticia', 'error');
+    }
   }
 
-  togglePinNews(newsId) {
-    this.updateState(state => {
-      const item = (state.newsPosts || []).find(n => n.id === newsId);
-      if (item) item.isPinned = !item.isPinned;
-    });
+  async togglePinNews(newsId) {
+    await NewsService.togglePin(newsId);
+    this.newsPosts = await NewsService.fetchNews();
     this.showToast('📌 Estado de la noticia actualizado', 'info');
+    this.render();
   }
 
-  deleteNewsPost(newsId) {
-    if (!confirm('¿Seguro que deseas eliminar esta noticia?')) return;
-    this.updateState(state => {
-      state.newsPosts = (state.newsPosts || []).filter(n => n.id !== newsId);
-    });
+  async deleteNewsPost(newsId) {
+    if (!confirm('¿Seguro que deseas eliminar esta noticia? Esta acción no se puede deshacer.')) return;
+    await NewsService.deleteNews(newsId);
+    if (this.selectedNewsArticleId === newsId) {
+      this.selectedNewsArticleId = null;
+    }
+    this.newsPosts = await NewsService.fetchNews();
     this.showToast('🗑️ Noticia eliminada', 'info');
+    this.render();
   }
 
   // ==========================================================================
